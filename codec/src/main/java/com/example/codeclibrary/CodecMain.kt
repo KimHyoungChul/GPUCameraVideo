@@ -12,10 +12,10 @@ class CodecMain {
 
     private external fun stringFromJNI(): String //java中用native关键字
 
-    companion object {
-
-        init {
-            System.loadLibrary("codec-lib")
-        }
-    }
+//    companion object {
+//
+//        init {
+//            System.loadLibrary("codec-lib")
+//        }
+//    }
 }

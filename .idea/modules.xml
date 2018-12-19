@@ -5,10 +5,10 @@
       <module fileurl="file://$PROJECT_DIR$/GPUCameraVideo.iml" filepath="$PROJECT_DIR$/GPUCameraVideo.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/base/base.iml" filepath="$PROJECT_DIR$/base/base.iml" />
-      <module fileurl="file://$PROJECT_DIR$/camera/cameralibrary.iml" filepath="$PROJECT_DIR$/camera/cameralibrary.iml" />
-      <module fileurl="file://$PROJECT_DIR$/codec/codeclibrary.iml" filepath="$PROJECT_DIR$/codec/codeclibrary.iml" />
-      <module fileurl="file://$PROJECT_DIR$/filter/filterlibrary.iml" filepath="$PROJECT_DIR$/filter/filterlibrary.iml" />
-      <module fileurl="file://$PROJECT_DIR$/image/imagelibrary.iml" filepath="$PROJECT_DIR$/image/imagelibrary.iml" />
+      <module fileurl="file://$PROJECT_DIR$/camera/camera.iml" filepath="$PROJECT_DIR$/camera/camera.iml" />
+      <module fileurl="file://$PROJECT_DIR$/codec/codec.iml" filepath="$PROJECT_DIR$/codec/codec.iml" />
+      <module fileurl="file://$PROJECT_DIR$/filter/filter.iml" filepath="$PROJECT_DIR$/filter/filter.iml" />
+      <module fileurl="file://$PROJECT_DIR$/image/image.iml" filepath="$PROJECT_DIR$/image/image.iml" />
     </modules>
   </component>
 </project>

@@ -3,15 +3,14 @@
 //
 #include <jni.h>
 #include <string>
+#include "GLContext.hpp"
 
 extern "C"
-JNIEXPORT jstring
-
-JNICALL
-Java_com_example_codeclibrary_CodecMain_stringFromJNI(
-        JNIEnv *env,
-        jobject /* this */) {
-    std::string hello = "Hello Codec";
+JNIEXPORT jstring JNICALL Java_com_example_codeclibrary_CodecMain_stringFromJNI(JNIEnv *env, jobject /* this */) {
+    GLContext* context = new GLContext();
+//    std::string hello = context->hello;
+    context->setString();
+    std::string hello = context->hello;
     return env->NewStringUTF(hello.c_str());
 }
 
