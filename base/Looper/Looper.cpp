@@ -13,15 +13,13 @@ void GCVBase::Looper::runFunctionInLock(const std::function<void()> &function) {
 GCVBase::Looper::Looper(const std::string &name) {
     mLooperName = name;
 
-    mMessageQueue = new MessageQueue(mLooperName, NULL);
+    mMessageQueue = new MessageQueue(mLooperName, mLooperName);
     queueConditionLock = new ConditionLock([&]() -> bool{
         return mMessageQueue->nextMessage() != NULL || mQuit;
     });
 
-    mWorkThread = new std::thread(loop(), this);
+    mWorkThread = new std::thread(&Looper::loop, this);
     threadId = mWorkThread->get_id();
-
-    mMessageQueue->setMessageQueueName(std::hash<std::thread::id>{}(threadId)+";"+mLooperName);
 }
 
 GCVBase::Looper::~Looper() {
@@ -34,7 +32,7 @@ GCVBase::Looper::~Looper() {
 
     delete(mWorkThread);
     delete(mMessageQueue);
-    delete(mFunctionLock);
+    delete(queueConditionLock);
 }
 
 std::string GCVBase::Looper::getLooperName() {

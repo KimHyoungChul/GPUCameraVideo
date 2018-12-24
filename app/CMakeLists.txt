@@ -14,6 +14,7 @@ set(CAMERA_CPP ../camera/src/main/cpp)
 set(CODEC_CPP ../codec/src/main/cpp)
 
 set(BASE_GL ../base/GL)
+set(BASE_BASE ../base/Base)
 set(BASE_Filter ../base/Filter)
 set(BASE_Looper ../base/Looper)
 
@@ -21,6 +22,7 @@ include_directories(GPUCameraVideo
                     ${CODEC_CPP}
                     ${CAMERA_CPP}
                     ${BASE_GL}
+                    ${BASE_BASE}
                     ${BASE_Filter}
                     ${BASE_Looper})
 
@@ -28,11 +30,10 @@ file(
     GLOB SOURCE_FILES
     ${CAMERA_CPP}/*.cpp
     ${CODEC_CPP}/*.cpp
+    ${BASE_GL}/*.cpp
+    ${BASE_BASE}/*.cpp
     ${BASE_Looper}/*.cpp
     ${BASE_Filter}/*.cpp
-    ${BASE_GL}/*.cpp
-
-
     )
 
 add_library( # Sets the name of the library.

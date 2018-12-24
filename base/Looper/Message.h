@@ -26,8 +26,7 @@ namespace GCVBase {
          */
         static int maxSize;
         static int nowSize;
-        static Message * poolHead = NULL;
-        static std::mutex mObtainMutex;
+        static Message * poolHead;
 
     public:
         std::string mMessageQueueName;
