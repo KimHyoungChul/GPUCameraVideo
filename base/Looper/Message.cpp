@@ -4,6 +4,11 @@
 
 #include "Message.h"
 
+int GCVBase::Message::maxSize = 20;
+int GCVBase::Message::nowSize = 0;
+GCVBase::Message * GCVBase::Message::poolHead = NULL;
+
+
 /**
  * 所有的方法都在Looper中统一做加锁等多线程相关的处理
  */
@@ -62,9 +67,6 @@ GCVBase::Message::Message() {
 }
 
 GCVBase::Message::Message(std::string messageQueueName, Function *messageFunction) {
-    nowSize = 0;
-    maxSize = 20; //缓存池默认大小为20
-
     mMessageQueueName = messageQueueName;
     mMessageFunction = messageFunction;
 }
@@ -72,7 +74,6 @@ GCVBase::Message::Message(std::string messageQueueName, Function *messageFunctio
 
 GCVBase::Message::~Message() {
     delete(mMessageFunction);
-    delete(mMessageQueueName);
 }
 
 
