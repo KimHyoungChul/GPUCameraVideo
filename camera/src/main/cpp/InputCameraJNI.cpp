@@ -18,7 +18,7 @@ jstring Java_com_example_cameralibrary_CameraMain_stringFromCameraJNI(JNIEnv *en
 }
 
 jlong Java_com_example_cameralibrary_camera_Camera_nativeCameraInit(JNIEnv *env, jobject obj) {
-    Camera * camera = new Camera();
+    Camera * camera = new Camera(); // TODO 需要用智能指针替换之
     camera->javaCamera = env->NewGlobalRef(obj);
     return (jlong) camera;
 }

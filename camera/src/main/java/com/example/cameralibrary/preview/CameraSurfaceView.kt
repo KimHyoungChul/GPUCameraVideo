@@ -12,7 +12,7 @@ import com.example.cameralibrary.camera.Camera
 
 class CameraSurfaceView : SurfaceView, SurfaceHolder.Callback{
 
-    private val camera: Camera = Camera() //这个context是直接从view类继承而来的
+    private val camera: Camera = Camera()
     private var cameraSurfaceTexture: CameraSurfaceTexture? = null
 
     private var nativeTextureId: Int = 0

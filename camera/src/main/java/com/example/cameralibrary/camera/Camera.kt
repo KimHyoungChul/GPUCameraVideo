@@ -1,6 +1,5 @@
 package com.example.cameralibrary.camera
 
-import android.content.Context
 import com.example.cameralibrary.camera.api.Camera1
 import com.example.cameralibrary.camera.api.CameraApi
 import com.example.cameralibrary.preview.CameraSurfaceTexture
