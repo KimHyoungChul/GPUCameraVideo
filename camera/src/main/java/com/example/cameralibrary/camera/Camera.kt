@@ -9,15 +9,17 @@ import java.nio.ByteBuffer
 /**
  * Created by liuxuan on 2018/12/27
  */
-class Camera(context : Context)  {
+class Camera {
 
     private val cameraApi: CameraApi
-
     private var state: CameraState = CameraState.RELEASED
     private var displayOrientation: Int = 0
+    var nativeInputCameraAddress: Long = 0
 
     init {
         cameraApi = Camera1() //暂时不考虑Camera2接口，但保留
+
+        nativeInputCameraAddress = nativeCameraInit()
     }
 
 
@@ -97,5 +99,7 @@ class Camera(context : Context)  {
         STOPPED,
         RELEASED;
     }
+
+    private external fun nativeCameraInit(): Long
 
 }
