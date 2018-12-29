@@ -36,7 +36,8 @@ namespace GCVBase {
         std::string getMessageQueueName();
 
         void addMessage(Message * message);
-        Message * nextMessage(); //获得消息队列中下一个Message对象，并从链表中删除
+        bool isMessageQueueEmpty();
+        Message * getNextMessage(); //获得消息队列中下一个Message对象，并从链表中删除
         void recycleMessage(Message * message); //用于处理完Message中的内容后回收并缓存Message对象
         void recycleAllMessage();
     };

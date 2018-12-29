@@ -1,21 +1,51 @@
 package com.example.mat.gpucameravideo
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
-//import com.example.cameralibrary.CameraMain
-import com.example.codeclibrary.CodecMain
-import kotlinx.android.synthetic.main.activity_main.*
+import android.support.v4.app.ActivityCompat
+import android.support.v4.content.PermissionChecker
+import com.example.cameralibrary.preview.CameraSurfaceView
 
 class MainActivity : AppCompatActivity() {
+
+    private var cameraView: CameraSurfaceView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        cameraView = findViewById(R.id.cameraview)
 
-        // Example of a call to a native method
-        sample_text.text = CodecMain().getStringFromCodec()
-//        sample_text.text = CameraMain().getStringFromCameraCodec()
+        if (PermissionChecker.checkSelfPermission(this@MainActivity, Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED)  {
+            ActivityCompat.requestPermissions(this@MainActivity, arrayOf(Manifest.permission.CAMERA), 100)
+        }
+        if (PermissionChecker.checkSelfPermission(this@MainActivity, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED)  {
+            ActivityCompat.requestPermissions(this@MainActivity, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), 100)
+        }
     }
+
+    override fun onStart() {
+        super.onStart()
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+    }
+
+    override fun onPause() {
+        super.onPause()
+
+        cameraView?.stop()
+    }
+
+    override fun onStop() {
+        super.onStop()
+
+        cameraView?.release()
+    }
+
 
     companion object {
 

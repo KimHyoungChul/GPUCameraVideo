@@ -15,7 +15,7 @@ GCVBase::Looper::Looper(const std::string &name) {
 
     mMessageQueue = new MessageQueue(mLooperName, mLooperName);
     queueConditionLock = new ConditionLock([&]() -> bool{
-        return mMessageQueue->nextMessage() != NULL || mQuit;
+        return !mMessageQueue->isMessageQueueEmpty() || mQuit;
     });
 
     mWorkThread = new std::thread(&Looper::loop, this);
@@ -58,10 +58,9 @@ void GCVBase::Looper::addMessage(const std::function<void()> &function, bool asy
 
     Function * fun = NULL;
     Message * message = NULL;
-     //这个方法本来就是同步方法
     runFunctionInLock([&]{
         message = Message::obtain();
-        if(message->mMessageFunction) {
+        if(!message->mMessageFunction) {
             fun = new Function(function, async);
             message->mMessageFunction = fun;
         } else{
@@ -103,7 +102,7 @@ void GCVBase::Looper::loop() {
         Message * message = NULL;
         Function * function = NULL;
         runFunctionInLock([&]{
-            message = mMessageQueue->nextMessage();
+            message = mMessageQueue->getNextMessage();
             if(message != NULL){
                 function = message->mMessageFunction;
             }

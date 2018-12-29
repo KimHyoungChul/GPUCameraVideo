@@ -29,7 +29,7 @@ void GCVBase::MessageQueue::addMessage(GCVBase::Message *message) {
     }
 }
 
-GCVBase::Message *GCVBase::MessageQueue::nextMessage() {
+GCVBase::Message *GCVBase::MessageQueue::getNextMessage() {
 
     if (queueHead == NULL) { //等于NULL说明此时没有消息了
         return NULL;
@@ -41,6 +41,8 @@ GCVBase::Message *GCVBase::MessageQueue::nextMessage() {
 
     return m;
 }
+
+
 
 void GCVBase::MessageQueue::recycleMessage(GCVBase::Message *message) {
     Message::recycle(message);
@@ -69,6 +71,11 @@ std::string GCVBase::MessageQueue::getMessageQueueName() {
 GCVBase::MessageQueue::~MessageQueue() {
     recycleAllMessage(); //此时消息队列中的消息还是没执行完，就不等了,直接回收
 }
+
+bool GCVBase::MessageQueue::isMessageQueueEmpty() {
+    return queueHead == NULL;
+}
+
 
 
 

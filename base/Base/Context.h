@@ -33,13 +33,15 @@ namespace GCVBase {
 
         JNIEnv * getEnv() const;
 
+        static void makeShareContextAsCurrent();
+
         static void initSharedContext(JNIEnv * env);
         static Context * getShareContext();
     };
 
     extern "C"{
-        void runSyncContextQueue(Context *context, const std::function<void()> &function);
-        void runAsyncContextQueue(Context *context, const std::function<void()> &function);
+        void runSyncContextLooper(Context *context, const std::function<void()> &function);
+        void runAsyncContextLooper(Context *context, const std::function<void()> &function);
     }
 }
 
