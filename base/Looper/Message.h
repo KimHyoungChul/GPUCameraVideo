@@ -30,7 +30,7 @@ namespace GCVBase {
 
     public:
         std::string mMessageQueueName;
-        Function *mMessageFunction;
+        Function *mMessageFunction = NULL;
 
         Message * next = NULL;
 

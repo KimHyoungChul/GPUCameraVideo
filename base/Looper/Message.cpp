@@ -50,7 +50,7 @@ void GCVBase::Message::recycle(GCVBase::Message *message) {
 
 void GCVBase::Message::resetMessage(Message * message) {
     message->next = NULL;
-    message->setMessageQueueName(NULL); //reset的时候主要把next和QueueName置空，Function对象不要动，可以重复利用
+    message->setMessageQueueName(""); //reset的时候主要把next和QueueName置空，Function对象不要动，可以重复利用
 }
 
 void GCVBase::Message::clearMessagePool() {
@@ -63,7 +63,7 @@ void GCVBase::Message::clearMessagePool() {
 }
 
 GCVBase::Message::Message() {
-    Message(NULL, NULL);
+    Message("", NULL);
 }
 
 GCVBase::Message::Message(std::string messageQueueName, Function *messageFunction) {

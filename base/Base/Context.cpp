@@ -82,8 +82,16 @@ GCVBase::Looper *GCVBase::Context::getContextLooper() {
     return mContextLooper;
 }
 
+void GCVBase::Context::makeShareContextAsCurrent() {
+    Context * shareContext = Context::getShareContext();
+    EglCore * shareEglContext = shareContext->getEglInstance();
+    if(!shareEglContext->isCurrentContext()){
+        shareEglContext->makeAsCurrent();
+    }
+}
 
-void GCVBase::runSyncContextQueue(Context *context, const std::function<void()> &function) {
+
+void GCVBase::runSyncContextLooper(Context *context, const std::function<void()> &function) {
     if(context->getContextLooper()->isCurrentThread()){
         function();
     } else{
@@ -91,7 +99,7 @@ void GCVBase::runSyncContextQueue(Context *context, const std::function<void()> 
     }
 }
 
-void GCVBase::runAsyncContextQueue(Context *context, const std::function<void()> &function) {
+void GCVBase::runAsyncContextLooper(Context *context, const std::function<void()> &function) {
     if(context->getContextLooper()->isCurrentThread()){
         function();
     } else{
