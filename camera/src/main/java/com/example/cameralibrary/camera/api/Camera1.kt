@@ -54,26 +54,6 @@ class Camera1 : CameraApi() {
         }
     }
 
-    override fun closeCamera(callback: CameraCloseCallback) {
-
-        handler {
-            val currentCamera = camera
-            if(currentCamera == null){
-                callback.onError()
-                return@handler
-            }
-
-            try {
-                currentCamera.release()
-            }catch (e: Exception){
-                callback.onError()
-            }finally {
-                camera = null
-                callback.onClose()
-            }
-        }
-    }
-
     override fun startPreview(surfaceTexture: SurfaceTexture, previewSize: CameraSize,
                               displayOrientation: Int, callback: PreViewStartCallback) {
         handler {
@@ -119,6 +99,26 @@ class Camera1 : CameraApi() {
                 callback.onError()
             }finally {
                 callback.onStop()
+            }
+        }
+    }
+
+    override fun closeCamera(callback: CameraCloseCallback) {
+
+        handler {
+            val currentCamera = camera
+            if(currentCamera == null){
+                callback.onError()
+                return@handler
+            }
+
+            try {
+                currentCamera.release()
+            }catch (e: Exception){
+                callback.onError()
+            }finally {
+                camera = null
+                callback.onClose()
             }
         }
     }

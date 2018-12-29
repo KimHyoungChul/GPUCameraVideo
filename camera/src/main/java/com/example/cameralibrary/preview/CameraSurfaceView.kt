@@ -2,13 +2,10 @@ package com.example.cameralibrary.preview
 
 import android.content.Context
 import android.util.AttributeSet
-import android.util.Log
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import com.example.cameralibrary.camera.Camera
 import com.example.cameralibrary.camera.CameraAttributes
-import com.example.cameralibrary.camera.CameraSize
-import com.example.cameralibrary.camera.CameraSizeCalculator
 
 /**
  * Created by liuxuan on 2018/12/26
@@ -20,7 +17,6 @@ class CameraSurfaceView : SurfaceView, SurfaceHolder.Callback{
     private var cameraSurfaceTexture: CameraSurfaceTexture? = null
     private var cameraAttributes: CameraAttributes? = null
 
-    private var state: CameraState = CameraState.RELEASED
     private var displayOrientation: Int = 0
     private var nativeTextureId: Int = 0
 
@@ -58,76 +54,15 @@ class CameraSurfaceView : SurfaceView, SurfaceHolder.Callback{
             }
         }
 
-        if (state == CameraState.RELEASED) {
-            open()
-        }
+        camera.openCamera(cameraSurfaceTexture, width, height)
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder?) {
-
+        camera.stopPreview()
     }
 
-
-    fun open() {
-        camera.openCamera(object : Camera.onCameraOpened{ // 异步线程回调之后才能开始startPreview
-            override fun onOpened(attributes: CameraAttributes) {
-                start(attributes)
-            }
-
-            override fun onOpenedError() {
-            }
-        })
-        state = CameraState.OPENED
-    }
-
-    fun start(attributes: CameraAttributes) {
-        cameraAttributes = attributes
-        val surfaceTexture = cameraSurfaceTexture
-        if (surfaceTexture != null) {
-            val previewOrientation = (attributes.sensorOrientation - displayOrientation + 360) % 360
-            val previewSize = CameraSizeCalculator(attributes.previewSizes)
-                    .findClosestSizeContainingTarget(when (previewOrientation % 180 == 0) {
-                        true -> CameraSize(width, height)
-                        false -> CameraSize(height, width)
-                    })
-
-            try {
-                camera.startPreview(surfaceTexture, previewSize, previewOrientation)
-            } catch (e: Exception) {
-
-            }
-        }
-
-        state = CameraState.STARTED
-    }
-
-    fun stop() {
-
-        try {
-            camera.stopPreview()
-        } catch (e: Exception) {
-        }
-
-        state = CameraState.STOPPED
-    }
-
-
-    fun release() {
-        try {
-            camera.closeCamera()
-        } catch (e: Exception) {
-        }
-
-        state = CameraState.RELEASED
-    }
-
-
-
-    private enum class CameraState {
-        OPENED,
-        STARTED,
-        STOPPED,
-        RELEASED;
+    fun closeCamera(){
+        camera.closeCamera()
     }
 
     private external fun nativeSurfaceWindowInit(surface: Any): Long
@@ -137,6 +72,4 @@ class CameraSurfaceView : SurfaceView, SurfaceHolder.Callback{
     private external fun nativeGenTexture(nativeCameraAddress: Long) : Int
 
     private external fun onSurfaceTextureAvailable(nativeCameraAddress: Long)
-
-
 }

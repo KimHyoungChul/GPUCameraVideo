@@ -1,8 +1,6 @@
 package com.example.cameralibrary.camera
 
 import android.content.Context
-import android.graphics.SurfaceTexture
-import android.view.Surface
 import com.example.cameralibrary.camera.api.Camera1
 import com.example.cameralibrary.camera.api.CameraApi
 import com.example.cameralibrary.preview.CameraSurfaceTexture
@@ -15,21 +13,34 @@ class Camera(context : Context)  {
 
     private val cameraApi: CameraApi
 
+    private var state: CameraState = CameraState.RELEASED
+    private var displayOrientation: Int = 0
+
     init {
         cameraApi = Camera1() //暂时不考虑Camera2接口，但保留
     }
 
 
-    fun openCamera(cameraOpenedCall: onCameraOpened) {
+    fun openCamera(cameraSurfaceTexture: CameraSurfaceTexture?, width: Int, height:Int) {
         cameraApi.openCamera(object : CameraApi.CameraOpenCallback{
             override fun onOpen(cameraAttributes: CameraAttributes) {
-                cameraOpenedCall.onOpened(cameraAttributes)
+                if (cameraSurfaceTexture != null) {
+                    val previewOrientation = (cameraAttributes.sensorOrientation - displayOrientation + 360) % 360
+                    val previewSize = CameraSizeCalculator(cameraAttributes.previewSizes)
+                            .findClosestSizeContainingTarget(when (previewOrientation % 180 == 0) {
+                                true -> CameraSize(width, height)
+                                false -> CameraSize(height, width)
+                            })
+                    startPreview(cameraSurfaceTexture, previewSize, previewOrientation)
+                }
+                state = CameraState.OPENED
             }
 
             override fun onError() {
                 // TODO "添加报错 log"
             }
         })
+
 
     }
 
@@ -42,7 +53,7 @@ class Camera(context : Context)  {
 
         cameraApi.startPreview(cameraSurfaceTexture, previewSize, previewOrientation, object : CameraApi.PreViewStartCallback {
             override fun onStart() {
-
+                state = CameraState.STARTED
             }
 
             override fun onPreviewFrame(previewData: ByteBuffer) {
@@ -52,14 +63,13 @@ class Camera(context : Context)  {
             override fun onError() {
 
             }
-
         })
     }
 
     fun stopPreview(){
         cameraApi.stopPreview(object : CameraApi.PreviewStopCallback{
             override fun onStop() {
-
+                state = CameraState.STOPPED
             }
 
             override fun onError() {
@@ -72,7 +82,7 @@ class Camera(context : Context)  {
     fun closeCamera() {
         cameraApi.closeCamera(object : CameraApi.CameraCloseCallback {
             override fun onClose() {
-
+                state = CameraState.RELEASED
             }
 
             override fun onError() {
@@ -81,9 +91,11 @@ class Camera(context : Context)  {
         })
     }
 
-    interface onCameraOpened{
-        fun onOpened(attributes: CameraAttributes)
-        fun onOpenedError()
+    private enum class CameraState {
+        OPENED,
+        STARTED,
+        STOPPED,
+        RELEASED;
     }
 
 }

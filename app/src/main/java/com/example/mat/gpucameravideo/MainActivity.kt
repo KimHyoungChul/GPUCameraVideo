@@ -25,25 +25,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onStart() {
-        super.onStart()
-    }
-
-    override fun onResume() {
-        super.onResume()
-
-    }
-
-    override fun onPause() {
-        super.onPause()
-
-        cameraView?.stop()
-    }
 
     override fun onStop() {
         super.onStop()
 
-        cameraView?.release()
+        cameraView?.closeCamera()
     }
 
 
