@@ -17,9 +17,9 @@ class CameraSurfaceTexture(nativeCameraAddress: Long, surfaceTexture: Int) : Sur
     private var previewSizeInit = false
 
     init {
-        nativeInitSurfaceTexture(nativeCameraAddress, surfaceTexture)
+//        nativeInitSurfaceTexture(nativeCameraAddress, surfaceTexture)
     }
 
 
-    private external fun nativeInitSurfaceTexture(nativeCameraAddress: Long, surfaceTexture: Int)
+//    private external fun nativeInitSurfaceTexture(nativeCameraAddress: Long, surfaceTexture: Int)
 }

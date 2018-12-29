@@ -27,8 +27,9 @@ class CameraSurfaceView : SurfaceView, SurfaceHolder.Callback{
     }
 
     private fun genTexture(textureCallback : (nativeCamera: Long, surfaceTexture: Int) -> Unit){
-        nativeTextureId = nativeGenTexture(camera.nativeInputCameraAddress)
-        textureCallback(camera.nativeInputCameraAddress, nativeTextureId)
+        val nativeInputCameraAddress = camera.creatNativeCamera()
+        nativeTextureId = nativeGenTexture(nativeInputCameraAddress)
+        textureCallback(nativeInputCameraAddress, nativeTextureId)
     }
 
     override fun surfaceCreated(holder: SurfaceHolder?) {

@@ -11,15 +11,18 @@ import java.nio.ByteBuffer
  */
 class Camera {
 
-    private val cameraApi: CameraApi
     private var state: CameraState = CameraState.RELEASED
+    private val cameraApi: CameraApi
     private var displayOrientation: Int = 0
-    var nativeInputCameraAddress: Long = 0
+    private var nativeInputCameraAddress: Long = 0
 
     init {
         cameraApi = Camera1() //暂时不考虑Camera2接口，但保留
+    }
 
+    fun creatNativeCamera(): Long{
         nativeInputCameraAddress = nativeCameraInit()
+        return nativeInputCameraAddress
     }
 
 
