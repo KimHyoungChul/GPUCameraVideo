@@ -1,5 +1,6 @@
 package com.example.cameralibrary.camera
 
+import android.util.Log
 import com.example.cameralibrary.camera.api.Camera1
 import com.example.cameralibrary.camera.api.CameraApi
 import com.example.cameralibrary.preview.CameraSurfaceTexture
@@ -62,6 +63,7 @@ class Camera {
 
             override fun onPreviewFrame(previewData: ByteBuffer) {
                 // TODO 再做一层接口，将previewFrame数据返回上去，可以做很多事情
+                Log.e("previewData", previewData.long.toString())
             }
 
             override fun onError() {

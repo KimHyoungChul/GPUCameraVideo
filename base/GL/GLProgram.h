@@ -25,11 +25,11 @@ namespace GCVBase {
 
         bool isLinked = false;
 
-        bool compileShader(GLuint shader, GLenum type, const GLchar *shaderString);
+        bool compileShader(GLuint *shader, GLenum type, const std::string &shaderString);
 
     public:
 
-        GLProgram(const char * vertexShaderString, const char * fragmentShaderString);
+        GLProgram(std::string &vertexShaderString, std::string &fragmentShaderString);
 
         bool linkProgram();
         void useProgram();
@@ -48,8 +48,11 @@ namespace GCVBase {
             return isLinked;
         }
 
-        GLuint getAttributeIndex(const char * attribute);
-        GLuint getuniformIndex(const char * uniformName);
+        GLuint getProgram(){
+            return mProgram;
+        }
+        GLuint getAttributeIndex(const std::string &attribute);
+        GLuint getuniformIndex(const std::string &uniformName);
 
     };
 }

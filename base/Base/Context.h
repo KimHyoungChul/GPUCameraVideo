@@ -40,8 +40,8 @@ namespace GCVBase {
     };
 
     extern "C"{
-        void runSyncContextLooper(Context *context, const std::function<void()> &function);
-        void runAsyncContextLooper(Context *context, const std::function<void()> &function);
+        void runSyncContextLooper(Looper * mLooper, const std::function<void()> &function);
+        void runAsyncContextLooper(Looper * mLooper, const std::function<void()> &function);
     }
 }
 

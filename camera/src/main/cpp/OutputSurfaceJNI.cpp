@@ -29,12 +29,33 @@ jint Java_com_example_cameralibrary_preview_CameraSurfaceView_nativeGenTexture(J
 }
 
 void Java_com_example_cameralibrary_preview_CameraSurfaceView_onSurfaceTextureAvailable(JNIEnv *env, jobject obj, jlong nativeCamera) {
+    if (!nativeCamera) {
+        return;
+    }
+    Camera * camera = (Camera *)nativeCamera;
+    if(!camera->getEglInstance()->isCurrentContext()){
+        camera->getEglInstance()->makeAsCurrent();
+    }
+
+}
+
+void Java_com_example_cameralibrary_preview_CameraSurfaceView_surfaceTextureAvailable(JNIEnv *env, jobject obj, jlong nativeCamera) {
     if(!nativeCamera){
         return ;
     }
 
     Camera * camera = (Camera *)nativeCamera;
     camera -> surfaceTextureAvailable();
+}
+
+void Java_com_example_cameralibrary_preview_CameraSurfaceView_nativeOnSurfaceChanged(JNIEnv *env, jobject obj, jlong nativeCamera, jint width, jint height) {
+    if(!nativeCamera){
+        return ;
+    }
+
+    Camera * camera = (Camera *)nativeCamera;
+    camera ->setPreviewWidth(width);
+    camera ->setPreviewHeight(height);
 }
 
 }

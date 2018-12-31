@@ -8,6 +8,7 @@
 #include <string>
 #include <EGL/egl.h>
 #include <android/native_window.h>
+#include <GLES2/gl2.h>
 
 namespace GCVBase {
 
