@@ -10,26 +10,45 @@ cmake_minimum_required(VERSION 3.4.1)
 # You can define multiple libraries, and CMake builds them for you.
 # Gradle automatically packages shared libraries with your APK.
 
-
-set(BASE_GL ../base/GL)
-set(BASE_Thread ../base/Thread)
-set(BASE_Filter ../base/Filter)
 set(CAMERA_CPP ../camera/src/main/cpp)
 set(CODEC_CPP ../codec/src/main/cpp)
+
+set(BASE_GL ../base/GL)
+set(BASE_BASE ../base/Base)
+set(BASE_Filter ../base/Filter)
+set(BASE_Looper ../base/Looper)
+set(BASE_Input ../base/Input)
+set(BASE_Output ../base/Output)
+set(BASE_Codec ../base/Codec)
+set(BASE_Codec_Decode ../base/Codec/Decode)
+set(BASE_Codec_Encode ../base/Codec/Encode)
 
 include_directories(GPUCameraVideo
                     ${CODEC_CPP}
                     ${CAMERA_CPP}
                     ${BASE_GL}
-                    ${BASE_Thread}
-                    ${BASE_Filter})
+                    ${BASE_BASE}
+                    ${BASE_Filter}
+                    ${BASE_Looper}
+                    ${BASE_Input}
+                    ${BASE_Output}
+                    ${BASE_Codec}
+                    ${BASE_Codec_Decode}
+                    ${BASE_Codec_Encode})
 
 file(
     GLOB SOURCE_FILES
-    ${BASE_Filter}/*.cpp
-    ${BASE_GL}/*.cpp
     ${CAMERA_CPP}/*.cpp
     ${CODEC_CPP}/*.cpp
+    ${BASE_GL}/*.cpp
+    ${BASE_BASE}/*.cpp
+    ${BASE_Looper}/*.cpp
+    ${BASE_Input}/*.cpp
+    ${BASE_Output}/*.cpp
+    ${BASE_Filter}/*.cpp
+    ${BASE_Codec}/*.cpp
+    ${BASE_Codec_Decode}/*.cpp
+    ${BASE_Codec_Encode}/*.cpp
     )
 
 add_library( # Sets the name of the library.
