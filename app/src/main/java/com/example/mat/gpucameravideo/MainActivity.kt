@@ -6,6 +6,7 @@ import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.PermissionChecker
+import android.view.View
 import com.example.cameralibrary.preview.CameraSurfaceView
 
 class MainActivity : AppCompatActivity() {
@@ -25,11 +26,19 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * 在Activity的生命周期中，对SurfaceView的可见性进行设置，触发surfaceView的生命周期变化（surfaceView在可见时，
+     * 会执行surfaceCreated方法，不可见时会自动销毁，执行surfaceDestroyed方法），从而更好的管理Camera的生命周期，
+     * 在相机不可见时释放相机资源
+     */
+    override fun onResume() {
+        super.onResume()
+        cameraView?.visibility = View.VISIBLE
+    }
 
-    override fun onStop() {
-        super.onStop()
-
-        cameraView?.closeCamera()
+    override fun onPause() {
+        super.onPause()
+        cameraView?.visibility = View.INVISIBLE
     }
 
 

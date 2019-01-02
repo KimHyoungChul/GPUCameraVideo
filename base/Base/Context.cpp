@@ -45,7 +45,10 @@ void GCVBase::Context::setNativeWindow(ANativeWindow *window) {
     if(!window){
         //TODO 报错
     }
-    mEglInstance = new EglCore(NULL, window, 0, 0); //这里我们是设置Native层的window,shareContext直接置空就可以了
+    // 这里要做线程转换，因为 setNativeWindow 函数是在 SurfaceHolder.Callback 线程中的
+    runSyncContextLooper(Context::getShareContext()->getContextLooper(), [&]{
+        mEglInstance = new EglCore(NULL, window, 0, 0); //这里我们是设置Native层的window,shareContext直接置空就可以了
+    });
 
 }
 
@@ -90,19 +93,24 @@ void GCVBase::Context::makeShareContextAsCurrent() {
     }
 }
 
-
-void GCVBase::runSyncContextLooper(Context *context, const std::function<void()> &function) {
-    if(context->getContextLooper()->isCurrentThread()){
+/**
+ * 一个Context对应一个Looper，一个Looper对应一个线程，因此这个函数的作用是往不同Looper对应线程的MessageQueue中添加任务
+ *
+ * @param mLooper 需要将任务添加到哪个Looper中，这个Looper可以使Context中的Looper，也可以是单独new出来的Looper
+ * @param function 需要执行的任务，一般传进来的多是Lamda表达式
+ */
+void GCVBase::runSyncContextLooper(Looper * mLooper, const std::function<void()> &function) {
+    if(mLooper->isCurrentThread()){
         function();
     } else{
-        context->getContextLooper()->addMessageSync(function);
+        mLooper->addMessageSync(function);
     }
 }
 
-void GCVBase::runAsyncContextLooper(Context *context, const std::function<void()> &function) {
-    if(context->getContextLooper()->isCurrentThread()){
+void GCVBase::runAsyncContextLooper(Looper * mLooper, const std::function<void()> &function) {
+    if(mLooper->isCurrentThread()){
         function();
     } else{
-        context->getContextLooper()->addMessageAsync(function);
+        mLooper->addMessageAsync(function);
     }
 }

@@ -65,7 +65,9 @@ class Camera1 : CameraApi() {
 
             try{
                 val parameters = currentCamera.parameters
+                val formatList : List<Int> = parameters.supportedPreviewFormats
                 parameters.setPreviewSize(previewSize.width, previewSize.height)
+
                 currentCamera.parameters = parameters
                 currentCamera.setDisplayOrientation(displayOrientation)
                 currentCamera.setPreviewTexture(surfaceTexture)
@@ -78,6 +80,9 @@ class Camera1 : CameraApi() {
                     callback.onPreviewFrame(ByteBuffer.wrap(bytes))
                 }
                 currentCamera.startPreview()
+                currentCamera.autoFocus(Camera.AutoFocusCallback { _, _ ->
+
+                })
 
             }catch (e: Exception){
                 callback.onError()
@@ -94,6 +99,7 @@ class Camera1 : CameraApi() {
             }
 
             try {
+                currentCamera.setPreviewCallback(null)
                 currentCamera.stopPreview()
             }catch (e: Exception){
                 callback.onError()

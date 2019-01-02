@@ -25,10 +25,10 @@ namespace GCVBase {
 
         EglCore * mEglInstance = NULL;
 
-        GLProgram * mProgram = NULL;
+        GLProgram * mCameraProgram = NULL;
 
-        static const char * VertexShared();
-        static const char * FragmentShared();
+        static std::string VertexShared();
+        static std::string FragmentShared();
 
     public:
         jobject javaCamera = NULL;
@@ -37,6 +37,14 @@ namespace GCVBase {
         ~Camera();
 
         EglCore * getEglInstance();
+
+        void setPreviewWidth(int previewWidth){
+            mPreviewWidth = previewWidth;
+        }
+
+        void setPreviewHeight(int previewHeight){
+            mPreviewHeight = previewHeight;
+        }
 
         void genSurfaceTexture();
         GLuint getSurfaceTexture();
