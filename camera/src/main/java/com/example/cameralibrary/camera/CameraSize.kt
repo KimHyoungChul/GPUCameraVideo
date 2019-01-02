@@ -10,14 +10,14 @@ class CameraSize(val width: Int, val height: Int): Comparable<CameraSize> {
         }
     }
 
-    fun getSize(): Int{
+    fun getArea(): Int{
         return width * height
     }
 
     override fun compareTo(other: CameraSize): Int {
         return when {
-            getSize() > other.getSize() -> 1
-            getSize() < other.getSize() -> -1
+            getArea() > other.getArea() -> 1
+            getArea() < other.getArea() -> -1
             else -> 0
         }
     }

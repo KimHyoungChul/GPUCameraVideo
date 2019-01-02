@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.SurfaceHolder
 import android.view.SurfaceView
+import android.view.WindowManager
 import com.example.cameralibrary.camera.Camera
 
 /**
@@ -12,7 +13,7 @@ import com.example.cameralibrary.camera.Camera
 
 class CameraSurfaceView : SurfaceView, SurfaceHolder.Callback{
 
-    private val camera: Camera = Camera()
+    private val camera: Camera = Camera(context)
     private var cameraSurfaceTexture: CameraSurfaceTexture? = null
 
     private var nativeTextureId: Int = 0
@@ -41,8 +42,8 @@ class CameraSurfaceView : SurfaceView, SurfaceHolder.Callback{
     }
 
     /**
-     * cameraSurfaceTexture.updateTexImage()这个方法，这个方法会在native调用egl函数去进行OES纹理的一系列渲染操作，因此
-     * 要保证该方法所在的线程中，对应的egl实例（EGLContext、EGLDisplay、EGLSurface）没有问题。
+     * updateTexImage()这个方法，会更新接收到的预览数据到其绑定的OES纹理中，因此要保证该方法所在的线程中，对应的egl实例
+     * (EGLContext、EGLDisplay、EGLSurface)没有问题。
      *
      * 如果存在上述对象"被系统回收（常见于onPause）"或者"OES纹理对应的线程没有egl对象（创建错线程了）"等问题，就会出现
      * checkAndUpdateEglState: invalid current EGLDisplay 的问题
@@ -73,9 +74,6 @@ class CameraSurfaceView : SurfaceView, SurfaceHolder.Callback{
         camera.stopPreview()
     }
 
-    fun closeCamera(){
-        camera.closeCamera()
-    }
 
     private external fun nativeSurfaceWindowInit(surface: Any): Long
 
