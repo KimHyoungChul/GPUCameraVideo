@@ -10,7 +10,7 @@ using namespace GCVBase;
 
 extern "C" {
 
-jlong Java_com_example_cameralibrary_preview_CameraSurfaceView_nativeSurfaceWindowInit(JNIEnv *env, jobject obj, jobject surface){
+jlong Java_com_example_cameralibrary_preview_surfaceview_SurfaceCallback_nativeSurfaceWindowInit(JNIEnv *env, jobject obj, jobject surface){
 
     Context::initSharedContext(env);
     ANativeWindow * nativeWindow = ANativeWindow_fromSurface(env, surface);
@@ -18,7 +18,7 @@ jlong Java_com_example_cameralibrary_preview_CameraSurfaceView_nativeSurfaceWind
     return 0;
 }
 
-jint Java_com_example_cameralibrary_preview_CameraSurfaceView_nativeGenTexture(JNIEnv *env, jobject obj, jlong nativeCamera) {
+jint Java_com_example_cameralibrary_preview_surfaceview_SurfaceCallback_nativeGenTexture(JNIEnv *env, jobject obj, jlong nativeCamera) {
     if(!nativeCamera){
         return 0;
     }
@@ -28,7 +28,7 @@ jint Java_com_example_cameralibrary_preview_CameraSurfaceView_nativeGenTexture(J
     return camera -> getSurfaceTexture();
 }
 
-void Java_com_example_cameralibrary_preview_CameraSurfaceView_onSurfaceTextureAvailable(JNIEnv *env, jobject obj, jlong nativeCamera) {
+void Java_com_example_cameralibrary_preview_surfaceview_SurfaceCallback_onSurfaceTextureAvailable(JNIEnv *env, jobject obj, jlong nativeCamera) {
     if (!nativeCamera) {
         return;
     }
@@ -39,7 +39,7 @@ void Java_com_example_cameralibrary_preview_CameraSurfaceView_onSurfaceTextureAv
 
 }
 
-void Java_com_example_cameralibrary_preview_CameraSurfaceView_surfaceTextureAvailable(JNIEnv *env, jobject obj, jlong nativeCamera) {
+void Java_com_example_cameralibrary_preview_surfaceview_SurfaceCallback_surfaceTextureAvailable(JNIEnv *env, jobject obj, jlong nativeCamera) {
     if(!nativeCamera){
         return ;
     }
@@ -48,7 +48,7 @@ void Java_com_example_cameralibrary_preview_CameraSurfaceView_surfaceTextureAvai
     camera -> surfaceTextureAvailable();
 }
 
-void Java_com_example_cameralibrary_preview_CameraSurfaceView_nativeOnSurfaceChanged(JNIEnv *env, jobject obj, jlong nativeCamera, jint width, jint height) {
+void Java_com_example_cameralibrary_preview_surfaceview_SurfaceCallback_nativeOnSurfaceChanged(JNIEnv *env, jobject obj, jlong nativeCamera, jint width, jint height) {
     if(!nativeCamera){
         return ;
     }

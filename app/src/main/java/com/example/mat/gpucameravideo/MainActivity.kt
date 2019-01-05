@@ -7,16 +7,16 @@ import android.os.Bundle
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.PermissionChecker
 import android.view.View
-import com.example.cameralibrary.preview.CameraSurfaceView
+import com.example.cameralibrary.preview.Preview
 
 class MainActivity : AppCompatActivity() {
 
-    private var cameraView: CameraSurfaceView? = null
+    private var preview: Preview? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        cameraView = findViewById(R.id.cameraview)
+        preview = findViewById(R.id.cameraview)
 
         if (PermissionChecker.checkSelfPermission(this@MainActivity, Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED)  {
             ActivityCompat.requestPermissions(this@MainActivity, arrayOf(Manifest.permission.CAMERA), 100)
@@ -33,12 +33,12 @@ class MainActivity : AppCompatActivity() {
      */
     override fun onResume() {
         super.onResume()
-        cameraView?.visibility = View.VISIBLE
+        preview?.getView()?.visibility = View.VISIBLE
     }
 
     override fun onPause() {
         super.onPause()
-        cameraView?.visibility = View.INVISIBLE
+        preview?.getView()?.visibility = View.INVISIBLE
     }
 
 

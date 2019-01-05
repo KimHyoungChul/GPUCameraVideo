@@ -13,7 +13,7 @@ class CameraHandler(private val handlerThread: HandlerThread): Handler(handlerTh
          * 重载运算符，重载invoke函数，相当于重载CameraHandler()，也就是创建一个CameraHandler实例
          */
         operator fun invoke(): CameraHandler{
-            val handlerThread = HandlerThread("CameraApi")
+            val handlerThread = HandlerThread("CameraImpl")
             handlerThread.start()
             return CameraHandler(handlerThread)
         }
