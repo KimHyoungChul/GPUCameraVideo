@@ -5,12 +5,13 @@
 #ifndef GPUCAMERAVIDEO_CAMERA_H
 #define GPUCAMERAVIDEO_CAMERA_H
 
-#include <Context.h>
-#include <GLProgram.h>
+#include "Context.h"
+#include "GLProgram.h"
+#include "NativeInput.h"
 
 namespace GCVBase {
 
-    class Camera {
+    class Camera : NativeInput{
 
     private:
 
@@ -30,6 +31,8 @@ namespace GCVBase {
         static std::string VertexShared();
         static std::string FragmentShared();
 
+        void newFrameReadyAtTime();
+
     public:
         jobject javaCamera = NULL;
 
@@ -37,6 +40,8 @@ namespace GCVBase {
         ~Camera();
 
         EglCore * getEglInstance();
+
+        void onSurfaceChanged();
 
         void setPreviewWidth(int previewWidth){
             mPreviewWidth = previewWidth;
@@ -50,6 +55,7 @@ namespace GCVBase {
         GLuint getSurfaceTexture();
 
         void surfaceTextureAvailable();
+
 
 
 

@@ -3,9 +3,10 @@
 //
 
 #include <android/log.h>
+#include <Math.hpp>
 #include "Camera.h"
 
-std::string vertexShader =
+std::string cameraVertexShader =
                 "attribute vec4 aPosition;\n"
                 "attribute vec4 aTexCoord;\n"
                 "varying vec2 vTexCoord;\n"
@@ -14,7 +15,7 @@ std::string vertexShader =
                 "   vTexCoord = aTexCoord.xy;\n"
                 "}\n";
 
-std::string fragmentShader =
+std::string cameraFragmentShader =
                 "#extension GL_OES_EGL_image_external : require\n"
                 "precision mediump float;\n"
                 "varying vec2 vTexCoord;\n"
@@ -31,7 +32,7 @@ GCVBase::Camera::Camera() {
 
         __android_log_print(ANDROID_LOG_ERROR, "Camera", "Camera Thread is %u", std::this_thread::get_id());
 
-        mCameraProgram = new GLProgram(vertexShader, fragmentShader);
+        mCameraProgram = new GLProgram(cameraVertexShader, cameraFragmentShader);
 
         if(!mCameraProgram->isProgramLinked()){
 
@@ -41,8 +42,9 @@ GCVBase::Camera::Camera() {
             }
         }
 
-        mCameraProgram->useProgram();
-
+        aPositionAttribute = mCameraProgram->getAttributeIndex("aPosition");
+        aTexCoordAttribute = mCameraProgram->getAttributeIndex("aTexCoord");
+        uTextureuniform = mCameraProgram->getuniformIndex("uTexture");
     });
 
 }
@@ -52,11 +54,11 @@ GCVBase::Camera::~Camera() {
 }
 
 std::string GCVBase::Camera::VertexShared() {
-    return vertexShader;
+    return cameraVertexShader;
 }
 
 std::string GCVBase::Camera::FragmentShared() {
-    return fragmentShader;
+    return cameraFragmentShader;
 }
 
 GCVBase::EglCore *GCVBase::Camera::getEglInstance() {
@@ -103,20 +105,29 @@ GLuint GCVBase::Camera::getSurfaceTexture() {
     return mOESTexture;
 }
 
+void GCVBase::Camera::onSurfaceChanged() {
+
+    /**
+     * TODO 这里的framebufferSize的宽高也要根据手机旋转的角度去判断横竖屏，以确定是否调换宽高
+     */
+    runSyncContextLooper(Context::getShareContext()->getContextLooper(), [=] {
+        Size framebufferSize = Size(mPreviewWidth, mPreviewHeight);
+        mOutputFrameBuffer = new FrameBuffer(framebufferSize, mOutputTextureOptions, Context::getShareContext());
+    });
+}
+
 void GCVBase::Camera::surfaceTextureAvailable() {
     glFlush();
 
     runSyncContextLooper(Context::getShareContext()->getContextLooper(), [=]{
-
         Context::makeShareContextAsCurrent();
         mCameraProgram->useProgram();
 
-        __android_log_print(ANDROID_LOG_ERROR, "surfaceTextureAvailable", "surfaceTextureAvailable Thread is %u", std::this_thread::get_id());
+        glEnableVertexAttribArray(aPositionAttribute);
+        glEnableVertexAttribArray(aTexCoordAttribute);
 
-        glViewport(0, 0, mPreviewWidth, mPreviewHeight);
-
-        glClear(GL_COLOR_BUFFER_BIT);
         glClearColor(0, 0, 0, 0);
+        glClear(GL_COLOR_BUFFER_BIT);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_EXTERNAL_OES, mOESTexture);
@@ -128,6 +139,9 @@ void GCVBase::Camera::surfaceTextureAvailable() {
                 1.0f,  1.0f,
         };
 
+        /**
+         * TODO 这个坐标要根据手机屏幕旋转的角度进行调整，以解决横竖屏切换造成的画面旋转问题
+         */
         static const GLfloat texCoord[] = { //这里纹理坐标已经做了右旋处理
                 1.0f, 1.0f,
                 1.0f, 0.0f,
@@ -135,22 +149,27 @@ void GCVBase::Camera::surfaceTextureAvailable() {
                 0.0f, 0.0f,
         };
 
-        glEnableVertexAttribArray(aPositionAttribute);
-        glEnableVertexAttribArray(aTexCoordAttribute);
-
-        aPositionAttribute = mCameraProgram->getAttributeIndex("aPosition");
-        aTexCoordAttribute = mCameraProgram->getAttributeIndex("aTexCoord");
-        uTextureuniform = mCameraProgram->getuniformIndex("uTexture");
-
         glUniform1i(uTextureuniform, 0);
         glVertexAttribPointer(aPositionAttribute, 2, GL_FLOAT, 0, 0, vertices);
         glVertexAttribPointer(aTexCoordAttribute, 2, GL_FLOAT, 0, 0, texCoord);
 
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        mOutputFrameBuffer->bindFramebuffer();
 
-        Context::getShareContext()->getEglInstance()->swapToScreen();
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); //只需要在该步骤之前绑定帧缓冲即可，该步骤所有的绘制都会渲染到帧缓冲中的纹理上
+
+        mOutputFrameBuffer->unbindFramebuffer(); // DisplayView绘制之前必须解绑帧缓冲对象，否则系统自带的帧缓冲（0）渲染不出来！！！！！！！
 
         glDisableVertexAttribArray(aPositionAttribute);
         glDisableVertexAttribArray(aTexCoordAttribute);
+
+        newFrameReadyAtTime();
     });
+}
+
+void GCVBase::Camera::newFrameReadyAtTime() {
+    for(auto i = mTargets.begin(); i < mTargets.end(); i++){
+        auto currentTarget =  * i;
+        currentTarget->_setOutputFramebuffer(mOutputFrameBuffer);
+        currentTarget->_newFrameReadyAtTime();
+    }
 }

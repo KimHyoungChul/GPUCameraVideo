@@ -28,10 +28,10 @@ class SurfaceCallback(camera: Camera, surfaceListener: SurfaceListener) : Surfac
 
     override fun surfaceCreated(holder: SurfaceHolder?) {
 
-
         if(holder != null) {
             nativeOutputSurfaceAddress = nativeSurfaceWindowInit(holder.surface) //初始化native层egl的surface表面
         }
+        mSurfaceChangedListener.onSurfaceCreated(nativeOutputSurfaceAddress)
 
         genTexture {
             nativeCamera, surfaceTexture ->
@@ -55,7 +55,7 @@ class SurfaceCallback(camera: Camera, surfaceListener: SurfaceListener) : Surfac
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder?) {
-        mSurfaceChangedListener.onSurfaceCreated()
+        mSurfaceChangedListener.onSurfaceDestory()
 //        mCamera.stopPreview()
     }
 

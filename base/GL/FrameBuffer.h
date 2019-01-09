@@ -5,9 +5,34 @@
 #ifndef GPUCAMERAVIDEO_FRAMEBUFFER_H
 #define GPUCAMERAVIDEO_FRAMEBUFFER_H
 
+#include <Math.hpp>
+#include <Context.h>
+#include "TextureOptions.h"
+
 namespace GCVBase {
     class FrameBuffer {
 
+    private:
+        GLuint mTexture = 0;
+        GLuint mFrameBuffer = 0;
+
+        Size mSize = Size::zero();
+
+        TextureOptions mTextureOptions;
+
+        Context * mContext = NULL;
+
+    public:
+        FrameBuffer(const Size &size = Size::zero(), const TextureOptions &options = TextureOptions(),
+                    Context * context = NULL);
+
+        void bindFramebuffer();
+        void unbindFramebuffer();
+
+        const TextureOptions &textureOptions() const;
+        const Context *context() const;
+        int framebuffer() const;
+        GLuint texture() const;
     };
 }
 

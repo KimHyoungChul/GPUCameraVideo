@@ -12,6 +12,7 @@ cmake_minimum_required(VERSION 3.4.1)
 
 set(CAMERA_CPP ../camera/src/main/cpp)
 set(CODEC_CPP ../codec/src/main/cpp)
+set(BASELIB_CPP ../baselib/src/main/cpp)
 
 set(BASE_GL ../base/GL)
 set(BASE_BASE ../base/Base)
@@ -26,6 +27,7 @@ set(BASE_Codec_Encode ../base/Codec/Encode)
 include_directories(GPUCameraVideo
                     ${CODEC_CPP}
                     ${CAMERA_CPP}
+                    ${BASELIB_CPP}
                     ${BASE_GL}
                     ${BASE_BASE}
                     ${BASE_Filter}
@@ -40,6 +42,7 @@ file(
     GLOB SOURCE_FILES
     ${CAMERA_CPP}/*.cpp
     ${CODEC_CPP}/*.cpp
+    ${BASELIB_CPP}/*.cpp
     ${BASE_GL}/*.cpp
     ${BASE_BASE}/*.cpp
     ${BASE_Looper}/*.cpp

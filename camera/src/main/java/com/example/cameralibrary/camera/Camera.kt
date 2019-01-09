@@ -5,6 +5,7 @@ import android.graphics.SurfaceTexture
 import android.hardware.Camera
 import android.util.Log
 import android.view.WindowManager
+import com.example.baselib.GCVInput
 import com.example.cameralibrary.camera.api.Camera1
 import com.example.cameralibrary.camera.api.CameraImpl
 import com.example.cameralibrary.preview.PreviewImpl
@@ -14,7 +15,7 @@ import java.nio.ByteBuffer
 /**
  * Created by liuxuan on 2018/12/27
  */
-class Camera(context: Context) {
+class Camera(context: Context): GCVInput() {
 
     private val cameraImpl: CameraImpl
     private val windowManager: WindowManager
@@ -47,7 +48,8 @@ class Camera(context: Context) {
     }
 
     fun creatNativeCamera(): Long {
-        return nativeCameraInit()
+        inputObjectAdress = nativeCameraInit()
+        return inputObjectAdress
     }
 
     fun setPreviewImpl(previewImpl: PreviewImpl){

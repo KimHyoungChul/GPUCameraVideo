@@ -1,1 +1,1 @@
-include ':app', ':camera', ':filter', ':codec', ':image', ':base'
+include ':app', ':camera', ':filter', ':codec', ':image', ':base', ':baselib'

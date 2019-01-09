@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.SurfaceTexture
 import android.util.AttributeSet
 import android.view.*
+import com.example.baselib.GCVOutput
 import com.example.cameralibrary.R
 import com.example.cameralibrary.camera.AspectRatio
 import com.example.cameralibrary.camera.CameraParam
@@ -17,7 +18,7 @@ import com.example.cameralibrary.preview.PreviewImpl.PreviewCameraOpenListener
 class SurfaceViewPreview(context: Context,
                          parent: ViewGroup,
                          attrs: AttributeSet?,
-                         defStyleAttr: Int) : PreviewImpl(context), SurfaceListener, PreviewCameraOpenListener {
+                         defStyleAttr: Int) : PreviewImpl(context), GCVOutput, SurfaceListener, PreviewCameraOpenListener {
 
     private var mSurfaceview: SurfaceView? = null
     private var mHolder: SurfaceHolder? = null
@@ -53,13 +54,23 @@ class SurfaceViewPreview(context: Context,
         return getWidth() != 0 && getHeight() != 0
     }
 
+    private var nativeOutputSurfaceViewAddress: Long = 0L
+
+    override fun nativeOutput(): Long {
+        return if(nativeOutputSurfaceViewAddress != 0L ){
+            nativeOutputSurfaceViewAddress
+        }else{
+            0L
+        }
+    }
+
 
     /******************************** SurfaceCallback生命周期 ********************************************/
     /**
      * 相机的生命周期应当由Surface来管理，不应当开放给顶层的View
      */
-    override fun onSurfaceCreated() {
-
+    override fun onSurfaceCreated(nativeOutputAddress: Long) {
+        nativeOutputSurfaceViewAddress = nativeOutputAddress
     }
 
     override fun onSurfaceChanged(surfaceTexture: SurfaceTexture?, width: Int, height: Int) {
@@ -68,6 +79,8 @@ class SurfaceViewPreview(context: Context,
         if(surfaceTexture != null){
             mCamera.openCamera(mFacing, surfaceTexture, this)
         }
+
+        mCamera.addTarget(this)
     }
 
     override fun onSurfaceDestory() {

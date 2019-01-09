@@ -38,7 +38,7 @@ abstract class PreviewImpl(context: Context) {
     }
 
     interface SurfaceListener {
-        fun onSurfaceCreated()
+        fun onSurfaceCreated(nativeOutputAddress: Long)
         fun onSurfaceChanged(surfaceTexture: SurfaceTexture?, width: Int, height: Int)
         fun onSurfaceDestory()
     }

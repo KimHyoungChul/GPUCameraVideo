@@ -1,0 +1,39 @@
+//
+// Created by 刘轩 on 2019/1/7.
+//
+
+#ifndef GPUCAMERAVIDEO_DISPLAYVIEW_H
+#define GPUCAMERAVIDEO_DISPLAYVIEW_H
+
+#include "NativeOutput.h"
+#include "GLProgram.h"
+
+namespace GCVBase {
+
+    class DisplayView : NativeOutput {
+
+    private:
+
+        GLuint aPositionAttribute = 0;
+        GLuint aTexCoordAttribute = 0;
+        GLuint uTextureuniform = 0;
+
+        int mDisplayWidth;
+        int mDisplayHeight;
+
+        GLProgram * mDisplayProgram;
+        FrameBuffer *mOutputDisplayFramebuffer = NULL;
+
+    public:
+
+        DisplayView(int width, int height);
+        ~DisplayView();
+
+        virtual void _newFrameReadyAtTime();
+        virtual void _setOutputFramebuffer(FrameBuffer *framebuffer);
+
+    };
+}
+
+
+#endif //GPUCAMERAVIDEO_DISPLAYVIEW_H

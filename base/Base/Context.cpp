@@ -73,7 +73,7 @@ JNIEnv *GCVBase::Context::getEnv() const {
 void GCVBase::Context::initSharedContext(JNIEnv *env) {
     static std::once_flag flag;
     std::call_once(flag, [=]{
-        mShareContext =  new Context(env, "shareLoop");
+        mShareContext =  new Context(env, "mainLoop");
     });
 }
 
@@ -90,6 +90,13 @@ void GCVBase::Context::makeShareContextAsCurrent() {
     EglCore * shareEglContext = shareContext->getEglInstance();
     if(!shareEglContext->isCurrentContext()){
         shareEglContext->makeAsCurrent();
+    }
+}
+
+void GCVBase::Context::useAsCurrentContext() {
+    EglCore * mEglContext = getEglInstance();
+    if(!mEglContext->isCurrentContext()){
+        mEglContext->makeAsCurrent();
     }
 }
 

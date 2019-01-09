@@ -5,6 +5,7 @@
 #include <android/native_window_jni.h>
 #include "Context.h"
 #include "camera.h"
+#include "DisplayView.h"
 
 using namespace GCVBase;
 
@@ -14,8 +15,14 @@ jlong Java_com_example_cameralibrary_preview_surfaceview_SurfaceCallback_nativeS
 
     Context::initSharedContext(env);
     ANativeWindow * nativeWindow = ANativeWindow_fromSurface(env, surface);
-    Context::getShareContext()->setNativeWindow(nativeWindow);
-    return 0;
+    DisplayView * displayView = NULL;
+
+    runSyncContextLooper(Context::getShareContext()->getContextLooper(), [&displayView, &nativeWindow]{
+        Context::getShareContext()->setNativeWindow(nativeWindow);
+        displayView = new DisplayView(ANativeWindow_getWidth(nativeWindow), ANativeWindow_getHeight(nativeWindow));
+    });
+
+    return (jlong)displayView;
 }
 
 jint Java_com_example_cameralibrary_preview_surfaceview_SurfaceCallback_nativeGenTexture(JNIEnv *env, jobject obj, jlong nativeCamera) {
@@ -56,6 +63,7 @@ void Java_com_example_cameralibrary_preview_surfaceview_SurfaceCallback_nativeOn
     Camera * camera = (Camera *)nativeCamera;
     camera ->setPreviewWidth(width);
     camera ->setPreviewHeight(height);
+    camera->onSurfaceChanged();
 }
 
 }
