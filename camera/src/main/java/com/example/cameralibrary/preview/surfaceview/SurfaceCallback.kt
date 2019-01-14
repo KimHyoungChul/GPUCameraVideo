@@ -49,14 +49,10 @@ class SurfaceCallback(camera: Camera, surfaceListener: SurfaceListener) : Surfac
         nativeOnSurfaceChanged(nativeInputCameraAddress, width, height)
 
         mSurfaceChangedListener.onSurfaceChanged(surfaceTexture, width, height)
-//        if(surfaceTexture != null) {
-//            mCamera.startPreview(surfaceTexture!!)
-//        }
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder?) {
         mSurfaceChangedListener.onSurfaceDestory()
-//        mCamera.stopPreview()
     }
 
 

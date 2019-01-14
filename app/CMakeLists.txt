@@ -14,6 +14,8 @@ set(CAMERA_CPP ../camera/src/main/cpp)
 set(CODEC_CPP ../codec/src/main/cpp)
 set(BASELIB_CPP ../baselib/src/main/cpp)
 
+set(BASE_Libyuv ../base/libyuv/include)
+
 set(BASE_GL ../base/GL)
 set(BASE_BASE ../base/Base)
 set(BASE_Filter ../base/Filter)
@@ -28,6 +30,9 @@ include_directories(GPUCameraVideo
                     ${CODEC_CPP}
                     ${CAMERA_CPP}
                     ${BASELIB_CPP}
+
+                    ${BASE_Libyuv}
+
                     ${BASE_GL}
                     ${BASE_BASE}
                     ${BASE_Filter}
@@ -43,6 +48,9 @@ file(
     ${CAMERA_CPP}/*.cpp
     ${CODEC_CPP}/*.cpp
     ${BASELIB_CPP}/*.cpp
+
+    ${BASE_Libyuv}/*.h
+
     ${BASE_GL}/*.cpp
     ${BASE_BASE}/*.cpp
     ${BASE_Looper}/*.cpp
@@ -50,9 +58,14 @@ file(
     ${BASE_Output}/*.cpp
     ${BASE_Filter}/*.cpp
     ${BASE_Codec}/*.cpp
+    ${BASE_Codec}/*.h
     ${BASE_Codec_Decode}/*.cpp
+    ${BASE_Codec_Decode}/*.hpp
     ${BASE_Codec_Encode}/*.cpp
+    ${BASE_Codec_Encode}/*.hpp
     )
+
+add_subdirectory(../base/libyuv/ ./build)
 
 add_library( # Sets the name of the library.
              codec-lib
@@ -89,6 +102,8 @@ target_link_libraries( # Specifies the target library.
                        # Links the target library to the log library
                        # included in the NDK.
                        android
+                       mediandk
                        EGL
                        GLESv2
+                       yuv
                        ${log-lib} )

@@ -5,6 +5,7 @@
 #ifndef GPUCAMERAVIDEO_CAMERA_H
 #define GPUCAMERAVIDEO_CAMERA_H
 
+#include "Time.hpp"
 #include "Context.h"
 #include "GLProgram.h"
 #include "NativeInput.h"
@@ -31,7 +32,7 @@ namespace GCVBase {
         static std::string VertexShared();
         static std::string FragmentShared();
 
-        void newFrameReadyAtTime();
+        void newFrameReadyAtTime(const MediaTime &time);
 
     public:
         jobject javaCamera = NULL;

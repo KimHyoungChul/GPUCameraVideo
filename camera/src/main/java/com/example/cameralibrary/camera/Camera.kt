@@ -3,13 +3,13 @@ package com.example.cameralibrary.camera
 import android.content.Context
 import android.graphics.SurfaceTexture
 import android.hardware.Camera
-import android.util.Log
 import android.view.WindowManager
 import com.example.baselib.GCVInput
 import com.example.cameralibrary.camera.api.Camera1
 import com.example.cameralibrary.camera.api.CameraImpl
 import com.example.cameralibrary.preview.PreviewImpl
-import com.example.cameralibrary.preview.PreviewImpl.PreviewCameraOpenListener
+import com.example.cameralibrary.preview.PreviewImpl.CameraOpenListener
+import com.example.cameralibrary.preview.PreviewImpl.CameraPreviewListener
 import java.nio.ByteBuffer
 
 /**
@@ -20,6 +20,8 @@ class Camera(context: Context): GCVInput() {
     private val cameraImpl: CameraImpl
     private val windowManager: WindowManager
     private var mCamera: Camera? = null
+    private var mSurfaceTexture: SurfaceTexture? = null
+    private var mPreviewStrat: CameraPreviewListener? = null
 
     private var state: CameraState = CameraState.RELEASED
 
@@ -59,28 +61,38 @@ class Camera(context: Context): GCVInput() {
 
     /************************************** 相机生命周期函数 **********************************************/
 
-    fun openCamera(mFacing: Int, surfaceTexture: SurfaceTexture? = null, previewOpen: PreviewCameraOpenListener? = null) {
+    fun openCamera(mFacing: Int, surfaceTexture: SurfaceTexture? = null,
+                   cameraOpen: CameraOpenListener? = null, previewStrat: CameraPreviewListener? = null) {
+
+        if(surfaceTexture != null) {
+            mSurfaceTexture = surfaceTexture
+        }
+
+        if(previewStrat != null){
+            mPreviewStrat = previewStrat
+        }
+
         cameraImpl.openCamera(mFacing, object : CameraImpl.CameraOpenCallback {
             override fun onOpen(mCamera:Camera) {
                 this@Camera.mCamera = mCamera
 
                 state = CameraState.OPENED
 
-                previewOpen?.onCameraOpen()
+                cameraOpen?.onCameraOpen()
 
                 if(surfaceTexture != null){
-                    startPreview(surfaceTexture)
+                    startPreview(surfaceTexture, mPreviewStrat)
                 }
             }
 
             override fun onError() {
                 // TODO "添加报错 log"
-                previewOpen?.onOpenError()
+                cameraOpen?.onOpenError()
             }
         })
     }
 
-    fun startPreview(surfaceTexture: SurfaceTexture) {
+    fun startPreview(surfaceTexture: SurfaceTexture, previewStartListener: CameraPreviewListener? = null) {
 
         if(state != CameraState.OPENED){
             // TODO 打log,Camera还没有正常打开，不应该进行 Preview 操作
@@ -94,11 +106,12 @@ class Camera(context: Context): GCVInput() {
 
             override fun onStart() {
                 state = CameraState.STARTED
+                previewStartListener?.onPreviewStart()
             }
 
             override fun onPreviewFrame(previewData: ByteBuffer) {
                 // TODO 再做一层接口，将previewFrame数据返回上去，可以做很多事情
-                Log.e("previewData", previewData.long.toString())
+//                Log.e("previewData", previewData.long.toString())
             }
 
             override fun onError() {
@@ -145,6 +158,10 @@ class Camera(context: Context): GCVInput() {
         cameraImpl.setFlash(flash)
     }
 
+    fun getCameraFacing(): Int{
+        return mFacing
+    }
+
     fun setFacing(facing: Int) {
         if (mFacing == facing) {
             return
@@ -156,7 +173,9 @@ class Camera(context: Context): GCVInput() {
         if (isCameraOpened()) { //前后置镜头切换的时候要关闭预览再打开
             stopPreview(object: FacingChangedCallback {
                 override fun onFacingChanged() {
-                    openCamera(facing)
+                    if(mSurfaceTexture != null) {
+                        openCamera(facing, mSurfaceTexture)
+                    }
                 }
             })
         }

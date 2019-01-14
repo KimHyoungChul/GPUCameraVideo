@@ -5,6 +5,8 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import android.widget.FrameLayout
+import com.example.baselib.GCVOutput
+import com.example.cameralibrary.camera.CameraParam
 import com.example.cameralibrary.effects.FocusMarkerView
 import com.example.cameralibrary.preview.surfaceview.SurfaceViewPreview
 
@@ -16,6 +18,16 @@ class Preview : FrameLayout {
 
     private val mPreviewImpl: PreviewImpl
     private val mFocusMarkerView: FocusMarkerView
+
+
+    companion object {
+
+        val FLASH_OFF = CameraParam.FLASH_OFF
+        val FLASH_ON = CameraParam.FLASH_ON
+        val FLASH_TORCH = CameraParam.FLASH_TORCH//手电筒状态
+        val FLASH_AUTO = CameraParam.FLASH_AUTO
+        val FLASH_RED_EYE = CameraParam.FLASH_RED_EYE
+    }
 
     constructor(context: Context) : this(context, null)
 
@@ -41,12 +53,33 @@ class Preview : FrameLayout {
         }
     }
 
+    fun addPreviewReadyListener(previewReady: PreviewReadyListener){
+        mPreviewImpl.setPreviewStartListener(previewReady)
+    }
+
     private fun creatPreview(context: Context, attributeSet: AttributeSet?, defStyleAttr: Int): PreviewImpl {
         return SurfaceViewPreview(context, this, attributeSet, defStyleAttr)
     }
 
     fun getView(): View? {
         return mPreviewImpl.getView()
+    }
+
+    fun getFacing(): Int {
+        return mPreviewImpl.getFacing()
+    }
+
+    fun setFacing(facing: Int){
+        mPreviewImpl.setFacing(facing)
+    }
+
+    fun setRecorder(output : GCVOutput){
+        mPreviewImpl.setRecorder(output)
+    }
+
+
+    interface PreviewReadyListener{
+        fun onPreviewReady()
     }
 
 }

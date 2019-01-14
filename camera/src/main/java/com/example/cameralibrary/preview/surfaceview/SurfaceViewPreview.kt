@@ -8,9 +8,11 @@ import com.example.baselib.GCVOutput
 import com.example.cameralibrary.R
 import com.example.cameralibrary.camera.AspectRatio
 import com.example.cameralibrary.camera.CameraParam
+import com.example.cameralibrary.preview.Preview
 import com.example.cameralibrary.preview.PreviewImpl
 import com.example.cameralibrary.preview.PreviewImpl.SurfaceListener
-import com.example.cameralibrary.preview.PreviewImpl.PreviewCameraOpenListener
+import com.example.cameralibrary.preview.PreviewImpl.CameraOpenListener
+import com.example.cameralibrary.preview.PreviewImpl.CameraPreviewListener
 
 /**
  * Created by liuxuan on 2019/1/2
@@ -18,7 +20,7 @@ import com.example.cameralibrary.preview.PreviewImpl.PreviewCameraOpenListener
 class SurfaceViewPreview(context: Context,
                          parent: ViewGroup,
                          attrs: AttributeSet?,
-                         defStyleAttr: Int) : PreviewImpl(context), GCVOutput, SurfaceListener, PreviewCameraOpenListener {
+                         defStyleAttr: Int) : PreviewImpl(context), GCVOutput, SurfaceListener, CameraOpenListener, CameraPreviewListener {
 
     private var mSurfaceview: SurfaceView? = null
     private var mHolder: SurfaceHolder? = null
@@ -28,6 +30,8 @@ class SurfaceViewPreview(context: Context,
     private var mContext: Context? = null
     private var mAttrs: AttributeSet? = null
     private var mDefStyleAttr: Int = 0
+
+    private var mPreviewReady: Preview.PreviewReadyListener? = null
 
     init {
         /*
@@ -48,6 +52,18 @@ class SurfaceViewPreview(context: Context,
 
     override fun getView(): View? {
         return mSurfaceview
+    }
+
+    override fun setRecorder(output: GCVOutput) {
+        mCamera.addTarget(output)
+    }
+
+    override fun setFacing(facing: Int){
+        mCamera.setFacing(facing)
+    }
+
+    override fun getFacing(): Int {
+        return mCamera.getCameraFacing()
     }
 
     override fun previewIsReady(): Boolean { //onSurfaceChanged执行完了之后就准备好了
@@ -77,7 +93,7 @@ class SurfaceViewPreview(context: Context,
         setPreviewSize(width, height)
 
         if(surfaceTexture != null){
-            mCamera.openCamera(mFacing, surfaceTexture, this)
+            mCamera.openCamera(mFacing, surfaceTexture, this, this)
         }
 
         mCamera.addTarget(this)
@@ -98,6 +114,22 @@ class SurfaceViewPreview(context: Context,
 
     override fun onOpenError() {
 
+    }
+
+    override fun onPreviewStart() {
+        mPreviewReady?.onPreviewReady()
+    }
+
+    override fun onPreviewError() {
+
+    }
+
+    /*********************************************************************************************/
+
+
+
+    override fun setPreviewStartListener(previewReady: Preview.PreviewReadyListener) {
+        mPreviewReady = previewReady
     }
 
 

@@ -87,7 +87,12 @@ class Camera1 : CameraImpl() {
                 val cameraInfo = Camera.CameraInfo()
                 val cameraId = (0 until Camera.getNumberOfCameras()).find {
                     Camera.getCameraInfo(it, cameraInfo)
-                    cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_BACK //相机朝向的方向
+                    if(mFacing == 0) {
+                        cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_BACK //相机朝向的方向
+                    } else{
+                        cameraInfo.facing == Camera.CameraInfo.CAMERA_FACING_FRONT //相机朝向的方向
+                    }
+
                 }
 
                 if (cameraId == null) {
@@ -148,10 +153,6 @@ class Camera1 : CameraImpl() {
 
             try {
                 currentCamera.setPreviewTexture(surfaceTexture)
-//                //使用此方法注册预览回调接口时，会将下一帧数据回调给onPreviewFrame()方法，之后这个接口将被销毁。也就是只会回调一次预览帧数据。
-                currentCamera.setOneShotPreviewCallback { _, _ ->
-                    callback.onStart()
-                }
                 //一旦使用此方法注册预览回调接口，onPreviewFrame()方法会一直被调用，直到camera preview销毁
                 currentCamera.setPreviewCallback { bytes: ByteArray, _ ->
                     callback.onPreviewFrame(ByteBuffer.wrap(bytes))
@@ -160,6 +161,8 @@ class Camera1 : CameraImpl() {
 
                 mShowingPreview = true
                 camera1state = Camera1State.STARTED
+
+                callback.onStart()
 
             } catch (e: Exception) {
                 callback.onError()

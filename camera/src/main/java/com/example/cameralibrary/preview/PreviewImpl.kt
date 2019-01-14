@@ -3,6 +3,7 @@ package com.example.cameralibrary.preview
 import android.content.Context
 import android.graphics.SurfaceTexture
 import android.view.View
+import com.example.baselib.GCVOutput
 import com.example.cameralibrary.camera.Camera
 
 /**
@@ -22,7 +23,13 @@ abstract class PreviewImpl(context: Context) {
 
     abstract fun getView(): View?
 
+    abstract fun setRecorder(output : GCVOutput)
+    abstract fun setFacing(facing: Int)
+    abstract fun getFacing(): Int
+
     abstract fun previewIsReady(): Boolean
+
+    abstract fun setPreviewStartListener(previewReady: Preview.PreviewReadyListener)
 
     fun setPreviewSize(width: Int, height: Int) {
         mWidth = width
@@ -43,8 +50,13 @@ abstract class PreviewImpl(context: Context) {
         fun onSurfaceDestory()
     }
 
-    interface PreviewCameraOpenListener {
+    interface CameraOpenListener {
         fun onCameraOpen()
         fun onOpenError()
+    }
+
+    interface CameraPreviewListener {
+        fun onPreviewStart()
+        fun onPreviewError()
     }
 }

@@ -5,6 +5,7 @@
 #ifndef GPUCAMERAVIDEO_NATIVEOUTPUT_H
 #define GPUCAMERAVIDEO_NATIVEOUTPUT_H
 
+#include "Time.hpp"
 #include "FrameBuffer.h"
 
 namespace GCVBase {
@@ -13,7 +14,7 @@ namespace GCVBase {
 
     public:
 
-        virtual void _newFrameReadyAtTime() = 0;
+        virtual void _newFrameReadyAtTime(const MediaTime &time) = 0;
         virtual void _setOutputFramebuffer(FrameBuffer *framebuffer) = 0;
     };
 

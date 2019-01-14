@@ -3,7 +3,7 @@
 //
 
 #include <android/log.h>
-#include <Math.hpp>
+#include <Size.hpp>
 #include "Camera.h"
 
 std::string cameraVertexShader =
@@ -112,7 +112,7 @@ void GCVBase::Camera::onSurfaceChanged() {
      */
     runSyncContextLooper(Context::getShareContext()->getContextLooper(), [=] {
         Size framebufferSize = Size(mPreviewWidth, mPreviewHeight);
-        mOutputFrameBuffer = new FrameBuffer(framebufferSize, mOutputTextureOptions, Context::getShareContext());
+    mOutputFrameBuffer = new FrameBuffer(framebufferSize, mOutputTextureOptions, Context::getShareContext());
     });
 }
 
@@ -143,10 +143,10 @@ void GCVBase::Camera::surfaceTextureAvailable() {
          * TODO 这个坐标要根据手机屏幕旋转的角度进行调整，以解决横竖屏切换造成的画面旋转问题
          */
         static const GLfloat texCoord[] = { //这里纹理坐标已经做了右旋处理
-                1.0f, 1.0f,
+                0.0f, 0.0f,
                 1.0f, 0.0f,
                 0.0f, 1.0f,
-                0.0f, 0.0f,
+                1.0f, 1.0f,
         };
 
         glUniform1i(uTextureuniform, 0);
@@ -159,17 +159,20 @@ void GCVBase::Camera::surfaceTextureAvailable() {
 
         mOutputFrameBuffer->unbindFramebuffer(); // DisplayView绘制之前必须解绑帧缓冲对象，否则系统自带的帧缓冲（0）渲染不出来！！！！！！！
 
+//        Context::getShareContext()->getEglInstance()->swapToScreen();
+
         glDisableVertexAttribArray(aPositionAttribute);
         glDisableVertexAttribArray(aTexCoordAttribute);
 
-        newFrameReadyAtTime();
+        MediaTime time = MediaTime((int64_t)currentTimeOfMilliseconds(), 60, TimeFlag_Init);
+        newFrameReadyAtTime(time);
     });
 }
 
-void GCVBase::Camera::newFrameReadyAtTime() {
+void GCVBase::Camera::newFrameReadyAtTime(const MediaTime &time) {
     for(auto i = mTargets.begin(); i < mTargets.end(); i++){
         auto currentTarget =  * i;
         currentTarget->_setOutputFramebuffer(mOutputFrameBuffer);
-        currentTarget->_newFrameReadyAtTime();
+        currentTarget->_newFrameReadyAtTime(time);
     }
 }

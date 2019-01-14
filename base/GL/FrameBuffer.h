@@ -5,7 +5,7 @@
 #ifndef GPUCAMERAVIDEO_FRAMEBUFFER_H
 #define GPUCAMERAVIDEO_FRAMEBUFFER_H
 
-#include <Math.hpp>
+#include <Size.hpp>
 #include <Context.h>
 #include "TextureOptions.h"
 

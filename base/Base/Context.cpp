@@ -73,7 +73,7 @@ JNIEnv *GCVBase::Context::getEnv() const {
 void GCVBase::Context::initSharedContext(JNIEnv *env) {
     static std::once_flag flag;
     std::call_once(flag, [=]{
-        mShareContext =  new Context(env, "mainLoop");
+        mShareContext =  new Context(env, "mainLooper");
     });
 }
 

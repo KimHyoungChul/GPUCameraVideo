@@ -46,7 +46,7 @@ GCVBase::DisplayView::~DisplayView() {
 
 }
 
-void GCVBase::DisplayView::_newFrameReadyAtTime() {
+void GCVBase::DisplayView::_newFrameReadyAtTime(const MediaTime &time) {
     if (!mOutputDisplayFramebuffer) {
         return;
     }
@@ -76,14 +76,11 @@ void GCVBase::DisplayView::_newFrameReadyAtTime() {
                 1.0f,  1.0f,
         };
 
-        /**
-         * TODO 这个矩阵需要好好研究一下，与Camera那边矩阵的对应关系！！！！
-         */
         static const GLfloat texCoord[] = {
-                0.0f, 0.0f,
+                1.0f, 1.0f,
                 1.0f, 0.0f,
                 0.0f, 1.0f,
-                1.0f, 1.0f,
+                0.0f, 0.0f,
         };
 
         glUniform1i(uTextureuniform, 1);

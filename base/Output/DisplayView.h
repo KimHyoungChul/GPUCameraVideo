@@ -29,7 +29,7 @@ namespace GCVBase {
         DisplayView(int width, int height);
         ~DisplayView();
 
-        virtual void _newFrameReadyAtTime();
+        virtual void _newFrameReadyAtTime(const MediaTime &time);
         virtual void _setOutputFramebuffer(FrameBuffer *framebuffer);
 
     };

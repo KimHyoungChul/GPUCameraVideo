@@ -68,8 +68,11 @@ GCVBase::EglCore::EglCore(const void *sharedContext, ANativeWindow *window, int 
         EGLSurface surface = eglCreatePbufferSurface(display, config, surfaceAttribs);
         checkEglError("eglCreatePbufferSurface");
 
-        EGLContext sharedGLContext = (EGLContext)sharedContext;
-        EGLContext context = eglCreateContext(display, config, sharedGLContext, ctxAttr);
+        EGLContext context;
+        if(sharedContext) {
+            EGLContext sharedGLContext = (EGLContext) sharedContext;
+            context = eglCreateContext(display, config, sharedGLContext, ctxAttr);
+        }
 
         if (context == EGL_NO_CONTEXT) {
             throw "eglCreateContext failed";
