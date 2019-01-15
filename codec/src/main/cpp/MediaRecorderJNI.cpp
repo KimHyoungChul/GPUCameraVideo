@@ -3,7 +3,7 @@
 //
 #include <jni.h>
 #include "EncoderConfig.hpp"
-#include "MediaRecorder .h"
+#include "MediaRecorder.h"
 
 using namespace GCVBase;
 

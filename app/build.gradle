@@ -15,7 +15,8 @@ android {
         externalNativeBuild {
             cmake {
                 cppFlags "-std=c++11"
-                arguments "-DANDROID_STL=c++_shared"
+                arguments "-DANDROID_STL=c++_shared",
+                        "-DARCORE_INCLUDE=${project.rootDir}/src/main/jniLibs/include"
             }
             ndk {
                 abiFilters "armeabi-v7a","x86"
@@ -31,7 +32,6 @@ android {
 
     sourceSets.main {
         jniLibs.srcDirs = ['src/main/jniLibs']
-        jni.srcDirs = []
     }
 
     externalNativeBuild {

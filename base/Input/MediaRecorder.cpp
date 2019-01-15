@@ -3,7 +3,9 @@
 //
 
 #include <EglCore.h>
-#include "MediaRecorder .h"
+#include "MediaRecorder.h"
+
+static const uint8_t MemoryAligned = 64; //默认64字节为一个读取单位进行内存对齐
 
 std::string MediaRecordVertexShader =
                 "attribute vec4 aPosition;\n"
@@ -53,16 +55,12 @@ GCVBase::MediaRecorder::MediaRecorder(const GCVBase::EncoderConfig &config, JNIE
         aPositionAttribute = mRecordProgram->getAttributeIndex("aPosition");
         aTexCoordAttribute = mRecordProgram->getAttributeIndex("aTexCoord");
         uTextureuniform = mRecordProgram->getuniformIndex("uTexture");
-
-        mRecordProgram->useProgram();
     });
 }
 
 GCVBase::MediaRecorder::~MediaRecorder() {
     delete(mediaBuffer);
 }
-
-static const uint8_t MemoryAligned = 64; //默认64字节为一个读取单位进行内存对齐
 
 void GCVBase::MediaRecorder::startRecording(const std::function<void ()> &handler) {
     mIsRecording = true;
@@ -133,11 +131,9 @@ void GCVBase::MediaRecorder::_newFrameReadyAtTime(const MediaTime &time) {
 
     glFlush();
 
-    runSyncContextLooper(recordContext->getContextLooper(), [=]{
+    runAsyncContextLooper(recordContext->getContextLooper(), [=]{
 
         renderRecorderFramebuffer(mFinalFilterFramebuffer);
-
-//        bindRecorderFramebuffer();
 
         /**
          * glReadPixels(GLint x,GLint y, GLsizei width, GLsizei height, GLenum format, GLenum type, GLvoid*pixels)

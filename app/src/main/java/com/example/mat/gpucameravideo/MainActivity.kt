@@ -109,6 +109,7 @@ class MainActivity : AppCompatActivity(), Preview.PreviewReadyListener{
 
         init {
             System.loadLibrary("codec-lib")
+            System.loadLibrary("yuv")
         }
     }
 }

@@ -38,9 +38,9 @@ namespace GCVBase{
         };
 
     public:
-        Time(int64_t nValue , int32_t nTimeScale, TimeFlags nFlags){
+        Time(int64_t nValue , int32_t nfps, TimeFlags nFlags){
             value = nValue;
-            fps = nTimeScale;
+            fps = nfps;
             flags = nFlags;
         }
 

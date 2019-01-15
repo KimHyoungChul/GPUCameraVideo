@@ -112,7 +112,7 @@ void GCVBase::Camera::onSurfaceChanged() {
      */
     runSyncContextLooper(Context::getShareContext()->getContextLooper(), [=] {
         Size framebufferSize = Size(mPreviewWidth, mPreviewHeight);
-    mOutputFrameBuffer = new FrameBuffer(framebufferSize, mOutputTextureOptions, Context::getShareContext());
+        mOutputFrameBuffer = new FrameBuffer(framebufferSize, mOutputTextureOptions, Context::getShareContext());
     });
 }
 
@@ -158,8 +158,6 @@ void GCVBase::Camera::surfaceTextureAvailable() {
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); //只需要在该步骤之前绑定帧缓冲即可，该步骤所有的绘制都会渲染到帧缓冲中的纹理上
 
         mOutputFrameBuffer->unbindFramebuffer(); // DisplayView绘制之前必须解绑帧缓冲对象，否则系统自带的帧缓冲（0）渲染不出来！！！！！！！
-
-//        Context::getShareContext()->getEglInstance()->swapToScreen();
 
         glDisableVertexAttribArray(aPositionAttribute);
         glDisableVertexAttribArray(aTexCoordAttribute);

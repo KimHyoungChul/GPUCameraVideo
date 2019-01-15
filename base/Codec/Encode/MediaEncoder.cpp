@@ -4,6 +4,7 @@
 
 #include <android/log.h>
 #include <Context.h>
+#include "libyuv.h"
 #include "MediaEncoder.hpp"
 
 const int COLOR_FormatYUV420Planar = 0x00000013;
@@ -281,7 +282,7 @@ void GCVBase::MediaEncoder::recordCodecBuffer(AMediaCodecBufferInfo *bufferInfo,
             bufferInfo->size = 0;
         }
 
-        GCVBase::runSyncContextLooper(encoderLooper, [=]{
+//        GCVBase::runSyncContextLooper(encoderLooper, [=]{
             if (bufferInfo->size > 0) {
                 bufferInfo->presentationTimeUs = (uint64_t)getCurrentTime();
                 media_status_t status = AMediaMuxer_writeSampleData(mMuxer, trackIndex, output, bufferInfo);
@@ -295,7 +296,7 @@ void GCVBase::MediaEncoder::recordCodecBuffer(AMediaCodecBufferInfo *bufferInfo,
             if (result != AMEDIA_OK) {
                 __android_log_print(ANDROID_LOG_ERROR, "releaseOutputBuffer", "AMediaCodec_releaseOutputBuffer failed type:%s", trackIndex == 0 ? "audio" : "video");
             }
-        });
+//        });
     }
 }
 

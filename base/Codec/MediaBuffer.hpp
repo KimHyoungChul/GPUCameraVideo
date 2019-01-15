@@ -43,12 +43,10 @@ namespace GCVBase {
     template <class T_>
     struct MediaBuffer {
     public:
-        MediaTime time = MediaTime::Zero();
-
         T_ mediaData;
-        std::unordered_map<MetaDataKey, const void *> metaData;
-
+        MediaTime time = MediaTime::Zero();
         MediaType mediaType = MediaType::Audio;
+        std::unordered_map<MetaDataKey, const void *> metaData;
     };
 
 
