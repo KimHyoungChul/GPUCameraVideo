@@ -5,6 +5,7 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import android.widget.FrameLayout
+import com.example.baselib.GCVInput
 import com.example.baselib.GCVOutput
 import com.example.cameralibrary.camera.CameraParam
 import com.example.cameralibrary.effects.FocusMarkerView
@@ -53,8 +54,12 @@ class Preview : FrameLayout {
         }
     }
 
-    fun addPreviewReadyListener(previewReady: PreviewReadyListener){
-        mPreviewImpl.setPreviewStartListener(previewReady)
+    fun setFilterGroup(filterGroup: GCVInput){
+        mPreviewImpl.setFilterGroup(filterGroup)
+    }
+
+    fun addPreviewLifeListener(previewLife: PreviewLifeListener){
+        mPreviewImpl.setPreviewStartListener(previewLife)
     }
 
     private fun creatPreview(context: Context, attributeSet: AttributeSet?, defStyleAttr: Int): PreviewImpl {
@@ -78,8 +83,11 @@ class Preview : FrameLayout {
     }
 
 
-    interface PreviewReadyListener{
+    interface PreviewLifeListener {
+        fun onPreviewCreated()
+        fun onPreviewChanged(width: Int, height: Int)
         fun onPreviewReady()
+        fun onPreviewDestory()
     }
 
 }

@@ -4,6 +4,7 @@
 
 #include <android/log.h>
 #include <Size.hpp>
+#include <FilterGroup.h>
 #include "Camera.h"
 
 std::string cameraVertexShader =
@@ -170,7 +171,8 @@ void GCVBase::Camera::surfaceTextureAvailable() {
 void GCVBase::Camera::newFrameReadyAtTime(const MediaTime &time) {
     for(auto i = mTargets.begin(); i < mTargets.end(); i++){
         auto currentTarget =  * i;
-        currentTarget->_setOutputFramebuffer(mOutputFrameBuffer);
-        currentTarget->_newFrameReadyAtTime(time);
+        FilterGroup * filterGroup = (FilterGroup *) (jlong)currentTarget;
+        filterGroup->_setOutputFramebuffer(mOutputFrameBuffer);
+        filterGroup->_newFrameReadyAtTime(time);
     }
 }

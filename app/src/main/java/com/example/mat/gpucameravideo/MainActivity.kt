@@ -2,7 +2,6 @@ package com.example.mat.gpucameravideo
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.graphics.SurfaceTexture
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Environment
@@ -14,13 +13,16 @@ import android.view.MenuItem
 import android.view.View
 import com.example.cameralibrary.camera.CameraParam
 import com.example.cameralibrary.preview.Preview
-import com.example.cameralibrary.preview.PreviewImpl
 import com.example.codeclibrary.MovieRecorder
+import com.example.filterlibrary.FilterGroup
+import com.example.filterlibrary.effects.BlackFilter
+import com.example.filterlibrary.effects.ColorFilter
 
-class MainActivity : AppCompatActivity(), Preview.PreviewReadyListener{
+class MainActivity : AppCompatActivity(), Preview.PreviewLifeListener {
 
     private var preview: Preview? = null
     private var movieRecorder: MovieRecorder? = null
+    private var mFilterGroup: FilterGroup? = null
 
     private val FLASH_OPTIONS = intArrayOf(Preview.FLASH_AUTO, Preview.FLASH_OFF, Preview.FLASH_ON)
     private val FLASH_ICONS = intArrayOf(R.drawable.ic_flash_auto, R.drawable.ic_flash_off, R.drawable.ic_flash_on)
@@ -34,7 +36,7 @@ class MainActivity : AppCompatActivity(), Preview.PreviewReadyListener{
         setContentView(R.layout.activity_main)
 
         preview = findViewById(R.id.cameraview)
-        preview?.addPreviewReadyListener(this)
+        preview?.addPreviewLifeListener(this) //设置PreView状态监听
 
         val toolbar = findViewById<View>(R.id.toolbar) as Toolbar
         setSupportActionBar(toolbar)
@@ -49,12 +51,32 @@ class MainActivity : AppCompatActivity(), Preview.PreviewReadyListener{
         }
     }
 
-    /**
-     * 当相机的Preview准备好了之后才能开始添加录制组件，不然录得视频最开始有几帧是黑屏的！！！
-     */
-    override fun onPreviewReady() {
-        movieRecorder = MovieRecorder(savePath, 720, 1280, (720.0 * 1280.0 * 6.51).toLong(), 0)
+
+    /****************************************  Preview的生命周期 *****************************************/
+
+    override fun onPreviewCreated() {
+
     }
+
+    override fun onPreviewChanged(width: Int, height: Int) {
+        movieRecorder = MovieRecorder(savePath, width, height, (width * height * 6.51).toLong(), 0)
+    }
+
+    override fun onPreviewReady() {
+        mFilterGroup = FilterGroup().apply {
+            addFilter(BlackFilter())
+            addFilter(ColorFilter())
+        }
+
+        preview?.setFilterGroup(mFilterGroup!!)
+    }
+
+    override fun onPreviewDestory() {
+
+    }
+
+    /****************************************************************************************************/
+
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.main, menu)

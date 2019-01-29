@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.SurfaceTexture
 import android.util.AttributeSet
 import android.view.*
+import com.example.baselib.GCVInput
 import com.example.baselib.GCVOutput
 import com.example.cameralibrary.R
 import com.example.cameralibrary.camera.AspectRatio
@@ -20,10 +21,13 @@ import com.example.cameralibrary.preview.PreviewImpl.CameraPreviewListener
 class SurfaceViewPreview(context: Context,
                          parent: ViewGroup,
                          attrs: AttributeSet?,
-                         defStyleAttr: Int) : PreviewImpl(context), GCVOutput, SurfaceListener, CameraOpenListener, CameraPreviewListener {
+                         defStyleAttr: Int) : PreviewImpl(context),
+        GCVOutput, SurfaceListener, CameraOpenListener, CameraPreviewListener {
 
     private var mSurfaceview: SurfaceView? = null
     private var mHolder: SurfaceHolder? = null
+
+    private var mFilterGroup: GCVInput? = null
 
     private var mFacing: Int = 0
 
@@ -31,7 +35,7 @@ class SurfaceViewPreview(context: Context,
     private var mAttrs: AttributeSet? = null
     private var mDefStyleAttr: Int = 0
 
-    private var mPreviewReady: Preview.PreviewReadyListener? = null
+    private var mPreviewLife: Preview.PreviewLifeListener? = null
 
     init {
         /*
@@ -54,8 +58,22 @@ class SurfaceViewPreview(context: Context,
         return mSurfaceview
     }
 
-    override fun setRecorder(output: GCVOutput) {
-        mCamera.addTarget(output)
+
+    /**
+     * 设置滤镜组
+     */
+    override fun setFilterGroup(filterGroup: GCVInput) {
+        mFilterGroup = filterGroup
+        mFilterGroup?.addTarget(this@SurfaceViewPreview)
+        mCamera.addTarget(mFilterGroup as GCVOutput)
+    }
+
+    /**
+     * 添加录像组件。注意如果需要有滤镜效果，则录像组件需要挂在滤镜组上
+     */
+    override fun setRecorder(movieRecorder: GCVOutput) {
+
+        mFilterGroup?.addTarget(movieRecorder)
     }
 
     override fun setFacing(facing: Int){
@@ -83,10 +101,12 @@ class SurfaceViewPreview(context: Context,
 
     /******************************** SurfaceCallback生命周期 ********************************************/
     /**
-     * 相机的生命周期应当由Surface来管理，不应当开放给顶层的View
+     * 相机的生命周期应当由Surface来管理，不应当开放给顶层的View,但是我们可以通过
      */
     override fun onSurfaceCreated(nativeOutputAddress: Long) {
         nativeOutputSurfaceViewAddress = nativeOutputAddress
+
+        mPreviewLife?.onPreviewCreated()
     }
 
     override fun onSurfaceChanged(surfaceTexture: SurfaceTexture?, width: Int, height: Int) {
@@ -96,11 +116,12 @@ class SurfaceViewPreview(context: Context,
             mCamera.openCamera(mFacing, surfaceTexture, this, this)
         }
 
-        mCamera.addTarget(this)
+        mPreviewLife?.onPreviewChanged(width, height)
     }
 
     override fun onSurfaceDestory() {
         mCamera.stopPreview()
+        mPreviewLife?.onPreviewCreated()
     }
 
 
@@ -117,7 +138,7 @@ class SurfaceViewPreview(context: Context,
     }
 
     override fun onPreviewStart() {
-        mPreviewReady?.onPreviewReady()
+        mPreviewLife?.onPreviewReady()
     }
 
     override fun onPreviewError() {
@@ -128,8 +149,8 @@ class SurfaceViewPreview(context: Context,
 
 
 
-    override fun setPreviewStartListener(previewReady: Preview.PreviewReadyListener) {
-        mPreviewReady = previewReady
+    override fun setPreviewStartListener(previewLife: Preview.PreviewLifeListener) {
+        mPreviewLife = previewLife
     }
 
 
