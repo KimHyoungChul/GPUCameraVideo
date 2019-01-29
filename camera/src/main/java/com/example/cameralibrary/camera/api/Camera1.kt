@@ -4,6 +4,7 @@ import android.graphics.Rect
 import android.graphics.SurfaceTexture
 import android.hardware.Camera
 import android.os.Handler
+import android.os.Looper
 import android.support.v4.util.SparseArrayCompat
 import android.util.Log
 import android.view.MotionEvent
@@ -13,8 +14,10 @@ import com.example.cameralibrary.camera.CameraParam
 import com.example.cameralibrary.camera.CameraSize
 import com.example.cameralibrary.camera.CameraSizeMap
 import com.example.cameralibrary.preview.PreviewImpl
+import com.example.cameralibrary.preview.PreviewImpl.CameraTakePictureListener
 import java.nio.ByteBuffer
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Created by liuxuan on 2018/12/27
@@ -34,6 +37,7 @@ class Camera1 : CameraImpl() {
     private var mDisplayOrientation: Int = 0
 
     private val mAutofocusCallback: Camera.AutoFocusCallback? = null
+    private var mCameraTakePicture: CameraTakePictureListener? = null
 
     private var mShowingPreview: Boolean = false
     private var camera1state: Camera1State = Camera1State.RELEASED
@@ -42,6 +46,9 @@ class Camera1 : CameraImpl() {
     private val mPictureSizes = CameraSizeMap()
 
     private val FLASH_MODES = SparseArrayCompat<String>()
+
+    private val isPictureCaptureInProgress = AtomicBoolean(false)
+    private val isAutoFocusInProgress = AtomicBoolean(false)
 
     private val FOCUS_AREA_SIZE_DEFAULT = 300
     private val FOCUS_METERING_AREA_WEIGHT_DEFAULT = 1000
@@ -184,6 +191,9 @@ class Camera1 : CameraImpl() {
 
                 mShowingPreview = false
                 camera1state = Camera1State.STOPPED
+
+                isPictureCaptureInProgress.set(false)
+                isAutoFocusInProgress.set(false)
             } catch (e: Exception) {
                 callback.onError()
             } finally {
@@ -215,8 +225,71 @@ class Camera1 : CameraImpl() {
 
     /****************************************** 拍照函数 *************************************************/
 
-    override fun takePicture() {
+    override fun takePicture(cameraTakePicture: CameraTakePictureListener) {
+        mCameraTakePicture = cameraTakePicture
 
+        if(!isCameraOpened()){
+            // TODO 打Log显示Camera生命周期有问题，拍照时还没有打开相机
+            return
+        }
+
+        if (getAutoFocus()) {
+//            CameraLog.i(TAG, "takePicture => autofocus")
+            mCamera?.cancelAutoFocus()
+            //mCamera.autoFocus进行自动对焦，对焦好了之后再拍照，魅族MX6手机上对焦比较慢，导致这里可能需要等待好几秒才拍照成功
+            //这里为了更好的体验，限制2秒之内一定要进行拍照，也就是说3秒钟之内对焦还没有成功的话那就直接进行拍照
+            isAutoFocusInProgress.getAndSet(true)
+            try {//从数据上报来看，部分相机自动对焦失败会发生crash，所以这里需要catch住，如果自动对焦失败了，那么就直接进行拍照
+                mCamera?.autoFocus({ _, _ ->
+                    if (isAutoFocusInProgress.get()) {
+//                        CameraLog.i(TAG, "takePicture, auto focus => takePictureInternal")
+                        isAutoFocusInProgress.set(false)
+                        takePictureInternal()
+                    }
+                })
+            } catch (error: Exception) {
+                if (isAutoFocusInProgress.get()) {
+//                    CameraLog.i(TAG, "takePicture, autofocus exception => takePictureInternal", error)
+                    isAutoFocusInProgress.set(false)
+                    takePictureInternal()
+                }
+            }
+
+            val handler = Handler(Looper.getMainLooper())
+            handler.postDelayed({
+                if (isAutoFocusInProgress.get()) {
+//                    CameraLog.i(TAG, "takePicture, cancel focus => takePictureInternal")
+                    isAutoFocusInProgress.set(false)
+                    takePictureInternal()
+                }
+            }, MIN_TIME_FOR_AUTOFOCUS)
+        } else {
+//            CameraLog.i(TAG, "takePicture => takePictureInternal")
+            takePictureInternal()
+        }
+    }
+
+    private fun getAutoFocus(): Boolean {
+        if (!isCameraOpened()) {
+            return mAutoFocus
+        }
+        val focusMode = mCameraParameters?.focusMode
+        return focusMode != null && focusMode.contains("continuous")
+    }
+
+    //上面的mCamera.autoFocus中的onAutoFocus这个回调会被调用两次，所以takePictureInternal方法中使用isPictureCaptureInProgress来控制takePicture的调用
+    private fun takePictureInternal() {
+        if (isCameraOpened() && !isPictureCaptureInProgress.getAndSet(true)) {
+            mCamera?.takePicture(null, null, null, Camera.PictureCallback { data, camera ->
+//                CameraLog.i(TAG, "takePictureInternal, onPictureTaken")
+                isPictureCaptureInProgress.set(false)
+
+                mCameraTakePicture?.onPictureTaken(ByteBuffer.wrap(data))
+
+                camera.cancelAutoFocus()
+                camera.startPreview()
+            })
+        }
     }
 
 

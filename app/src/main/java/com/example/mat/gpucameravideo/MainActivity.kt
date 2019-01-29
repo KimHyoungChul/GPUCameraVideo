@@ -5,20 +5,26 @@ import android.content.pm.PackageManager
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Environment
+import android.support.design.widget.FloatingActionButton
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.PermissionChecker
 import android.support.v7.widget.Toolbar
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import com.example.cameralibrary.camera.CameraParam
 import com.example.cameralibrary.preview.Preview
+import com.example.cameralibrary.preview.Preview.PreviewLifeListener
+import com.example.cameralibrary.preview.Preview.PreviewDataListener
 import com.example.codeclibrary.MovieRecorder
 import com.example.filterlibrary.FilterGroup
 import com.example.filterlibrary.effects.BlackFilter
 import com.example.filterlibrary.effects.ColorFilter
+import java.nio.ByteBuffer
 
-class MainActivity : AppCompatActivity(), Preview.PreviewLifeListener {
+class MainActivity : AppCompatActivity(),
+        PreviewLifeListener, PreviewDataListener, View.OnClickListener {
 
     private var preview: Preview? = null
     private var movieRecorder: MovieRecorder? = null
@@ -36,12 +42,16 @@ class MainActivity : AppCompatActivity(), Preview.PreviewLifeListener {
         setContentView(R.layout.activity_main)
 
         preview = findViewById(R.id.cameraview)
-        preview?.addPreviewLifeListener(this) //设置PreView状态监听
+        preview?.addPreviewLifeListener(this) //设置PreView生命周期监听
+        preview?.addPreviewDataListener(this) //设置Preview数据监听，获取拍照后的数据和预览数据
 
         val toolbar = findViewById<View>(R.id.toolbar) as Toolbar
         setSupportActionBar(toolbar)
         val actionBar = supportActionBar
         actionBar?.setDisplayShowTitleEnabled(false)
+
+        val pictureButton = findViewById<FloatingActionButton>(R.id.take_picture)
+        pictureButton.setOnClickListener(this)
 
         if (PermissionChecker.checkSelfPermission(this@MainActivity, Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED)  {
             ActivityCompat.requestPermissions(this@MainActivity, arrayOf(Manifest.permission.CAMERA), 100)
@@ -54,15 +64,15 @@ class MainActivity : AppCompatActivity(), Preview.PreviewLifeListener {
 
     /****************************************  Preview的生命周期 *****************************************/
 
-    override fun onPreviewCreated() {
+    override fun onPreviewCreated() { //对应onSurfaceCreate
 
     }
 
-    override fun onPreviewChanged(width: Int, height: Int) {
+    override fun onPreviewChanged(width: Int, height: Int) { //对应onSurfaceChange
         movieRecorder = MovieRecorder(savePath, width, height, (width * height * 6.51).toLong(), 0)
     }
 
-    override fun onPreviewReady() {
+    override fun onPreviewReady() { //对应 startPreview 成功
         mFilterGroup = FilterGroup().apply {
             addFilter(BlackFilter())
             addFilter(ColorFilter())
@@ -71,8 +81,22 @@ class MainActivity : AppCompatActivity(), Preview.PreviewLifeListener {
         preview?.setFilterGroup(mFilterGroup!!)
     }
 
-    override fun onPreviewDestory() {
+    override fun onPreviewDestory() { //对应onSurfaceDestory
 
+    }
+
+    /****************************************************************************************************/
+
+
+
+    /****************************************  Preview的数据回调 *****************************************/
+
+    override fun onPreviewFrame(previewFrameData: ByteBuffer) { //每一帧预览的数据
+
+    }
+
+    override fun onPictureTaken(cameraPictureData: ByteBuffer) { //拍照后的图片数据
+        Log.e("onPictureTaken", cameraPictureData.long.toString())
     }
 
     /****************************************************************************************************/
@@ -109,6 +133,15 @@ class MainActivity : AppCompatActivity(), Preview.PreviewLifeListener {
 
         }
         return super.onOptionsItemSelected(item)
+    }
+
+
+    override fun onClick(v: View?) {
+        when(v?.id){
+            R.id.take_picture -> {
+                preview?.takePicture()
+            }
+        }
     }
 
     /**

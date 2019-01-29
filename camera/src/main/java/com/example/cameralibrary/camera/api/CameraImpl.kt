@@ -75,5 +75,5 @@ abstract class CameraImpl {
     /**
      * 拍照
      */
-    abstract fun takePicture()
+    abstract fun takePicture(cameraTakePicture: PreviewImpl.CameraTakePictureListener)
 }

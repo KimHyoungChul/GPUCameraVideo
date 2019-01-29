@@ -6,6 +6,7 @@ import android.view.View
 import com.example.baselib.GCVInput
 import com.example.baselib.GCVOutput
 import com.example.cameralibrary.camera.Camera
+import java.nio.ByteBuffer
 
 /**
  * Created by liuxuan on 2019/1/2
@@ -28,9 +29,12 @@ abstract class PreviewImpl(context: Context) {
     abstract fun setFacing(facing: Int)
     abstract fun getFacing(): Int
 
+    abstract fun takePicture()
+
     abstract fun previewIsReady(): Boolean
 
-    abstract fun setPreviewStartListener(previewLife: Preview.PreviewLifeListener)
+    abstract fun setPreviewLifeListener(previewLife: Preview.PreviewLifeListener)
+    abstract fun setPreviewDataListener(previewData: Preview.PreviewDataListener)
 
     abstract fun setFilterGroup(filterGroup: GCVInput)
 
@@ -60,6 +64,12 @@ abstract class PreviewImpl(context: Context) {
 
     interface CameraPreviewListener {
         fun onPreviewStart()
+        fun onPreviewFrame(previewFrameData: ByteBuffer)
         fun onPreviewError()
+    }
+
+    interface CameraTakePictureListener {
+        fun onPictureTaken(cameraPictureData: ByteBuffer)
+        fun onPictureError()
     }
 }

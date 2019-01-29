@@ -10,6 +10,7 @@ import com.example.baselib.GCVOutput
 import com.example.cameralibrary.camera.CameraParam
 import com.example.cameralibrary.effects.FocusMarkerView
 import com.example.cameralibrary.preview.surfaceview.SurfaceViewPreview
+import java.nio.ByteBuffer
 
 /**
  * Created by liuxuan on 2019/1/2
@@ -59,7 +60,11 @@ class Preview : FrameLayout {
     }
 
     fun addPreviewLifeListener(previewLife: PreviewLifeListener){
-        mPreviewImpl.setPreviewStartListener(previewLife)
+        mPreviewImpl.setPreviewLifeListener(previewLife)
+    }
+
+    fun addPreviewDataListener(previewData: PreviewDataListener){
+        mPreviewImpl.setPreviewDataListener(previewData)
     }
 
     private fun creatPreview(context: Context, attributeSet: AttributeSet?, defStyleAttr: Int): PreviewImpl {
@@ -82,12 +87,21 @@ class Preview : FrameLayout {
         mPreviewImpl.setRecorder(output)
     }
 
+    fun takePicture(){
+        mPreviewImpl.takePicture()
+    }
+
 
     interface PreviewLifeListener {
         fun onPreviewCreated()
         fun onPreviewChanged(width: Int, height: Int)
         fun onPreviewReady()
         fun onPreviewDestory()
+    }
+
+    interface PreviewDataListener {
+        fun onPreviewFrame(previewFrameData: ByteBuffer)
+        fun onPictureTaken(cameraPictureData: ByteBuffer)
     }
 
 }

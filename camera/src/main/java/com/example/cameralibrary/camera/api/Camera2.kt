@@ -8,6 +8,10 @@ import com.example.cameralibrary.preview.PreviewImpl
  * Created by liuxuan on 2018/12/27
  */
 class Camera2 : CameraImpl(){
+    override fun takePicture(cameraTakePicture: PreviewImpl.CameraTakePictureListener) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
     override fun openCamera(mFacing: Int, callback: CameraOpenCallback) {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
@@ -49,10 +53,6 @@ class Camera2 : CameraImpl(){
     }
 
     override fun setDisplayOrientation(displayOrientation: Int) {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-    }
-
-    override fun takePicture() {
         TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 

@@ -14,6 +14,8 @@ import com.example.cameralibrary.preview.PreviewImpl
 import com.example.cameralibrary.preview.PreviewImpl.SurfaceListener
 import com.example.cameralibrary.preview.PreviewImpl.CameraOpenListener
 import com.example.cameralibrary.preview.PreviewImpl.CameraPreviewListener
+import com.example.cameralibrary.preview.PreviewImpl.CameraTakePictureListener
+import java.nio.ByteBuffer
 
 /**
  * Created by liuxuan on 2019/1/2
@@ -21,8 +23,8 @@ import com.example.cameralibrary.preview.PreviewImpl.CameraPreviewListener
 class SurfaceViewPreview(context: Context,
                          parent: ViewGroup,
                          attrs: AttributeSet?,
-                         defStyleAttr: Int) : PreviewImpl(context),
-        GCVOutput, SurfaceListener, CameraOpenListener, CameraPreviewListener {
+                         defStyleAttr: Int) : PreviewImpl(context), GCVOutput,
+        SurfaceListener, CameraOpenListener, CameraPreviewListener, CameraTakePictureListener {
 
     private var mSurfaceview: SurfaceView? = null
     private var mHolder: SurfaceHolder? = null
@@ -35,7 +37,10 @@ class SurfaceViewPreview(context: Context,
     private var mAttrs: AttributeSet? = null
     private var mDefStyleAttr: Int = 0
 
-    private var mPreviewLife: Preview.PreviewLifeListener? = null
+    private var nativeOutputSurfaceViewAddress: Long = 0L
+
+    private var mPreviewLifeListener: Preview.PreviewLifeListener? = null
+    private var mPreviewDataListener: Preview.PreviewDataListener? = null
 
     init {
         /*
@@ -72,7 +77,6 @@ class SurfaceViewPreview(context: Context,
      * 添加录像组件。注意如果需要有滤镜效果，则录像组件需要挂在滤镜组上
      */
     override fun setRecorder(movieRecorder: GCVOutput) {
-
         mFilterGroup?.addTarget(movieRecorder)
     }
 
@@ -88,7 +92,9 @@ class SurfaceViewPreview(context: Context,
         return getWidth() != 0 && getHeight() != 0
     }
 
-    private var nativeOutputSurfaceViewAddress: Long = 0L
+    override fun takePicture(){
+        mCamera.takePicture(this)
+    }
 
     override fun nativeOutput(): Long {
         return if(nativeOutputSurfaceViewAddress != 0L ){
@@ -106,7 +112,7 @@ class SurfaceViewPreview(context: Context,
     override fun onSurfaceCreated(nativeOutputAddress: Long) {
         nativeOutputSurfaceViewAddress = nativeOutputAddress
 
-        mPreviewLife?.onPreviewCreated()
+        mPreviewLifeListener?.onPreviewCreated()
     }
 
     override fun onSurfaceChanged(surfaceTexture: SurfaceTexture?, width: Int, height: Int) {
@@ -116,12 +122,12 @@ class SurfaceViewPreview(context: Context,
             mCamera.openCamera(mFacing, surfaceTexture, this, this)
         }
 
-        mPreviewLife?.onPreviewChanged(width, height)
+        mPreviewLifeListener?.onPreviewChanged(width, height)
     }
 
     override fun onSurfaceDestory() {
         mCamera.stopPreview()
-        mPreviewLife?.onPreviewCreated()
+        mPreviewLifeListener?.onPreviewCreated()
     }
 
 
@@ -138,19 +144,35 @@ class SurfaceViewPreview(context: Context,
     }
 
     override fun onPreviewStart() {
-        mPreviewLife?.onPreviewReady()
+        mPreviewLifeListener?.onPreviewReady()
+    }
+
+    override fun onPreviewFrame(previewFrameData: ByteBuffer) {
+        mPreviewDataListener?.onPreviewFrame(previewFrameData)
     }
 
     override fun onPreviewError() {
 
     }
 
+    override fun onPictureTaken(cameraPictureData: ByteBuffer) {
+        mPreviewDataListener?.onPictureTaken(cameraPictureData)
+    }
+
+    override fun onPictureError() {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+    }
+
     /*********************************************************************************************/
 
 
 
-    override fun setPreviewStartListener(previewLife: Preview.PreviewLifeListener) {
-        mPreviewLife = previewLife
+    override fun setPreviewLifeListener(previewLife: Preview.PreviewLifeListener) {
+        mPreviewLifeListener = previewLife
+    }
+
+    override fun setPreviewDataListener(previewData: Preview.PreviewDataListener){
+        mPreviewDataListener = previewData
     }
 
 

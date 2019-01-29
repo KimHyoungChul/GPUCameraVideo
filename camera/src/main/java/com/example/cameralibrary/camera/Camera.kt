@@ -10,6 +10,7 @@ import com.example.cameralibrary.camera.api.CameraImpl
 import com.example.cameralibrary.preview.PreviewImpl
 import com.example.cameralibrary.preview.PreviewImpl.CameraOpenListener
 import com.example.cameralibrary.preview.PreviewImpl.CameraPreviewListener
+import com.example.cameralibrary.preview.PreviewImpl.CameraTakePictureListener
 import java.nio.ByteBuffer
 
 /**
@@ -21,7 +22,7 @@ class Camera(context: Context): GCVInput() {
     private val windowManager: WindowManager
     private var mCamera: Camera? = null
     private var mSurfaceTexture: SurfaceTexture? = null
-    private var mPreviewStrat: CameraPreviewListener? = null
+    private var mPreviewListener: CameraPreviewListener? = null
 
     private var state: CameraState = CameraState.RELEASED
 
@@ -62,14 +63,14 @@ class Camera(context: Context): GCVInput() {
     /************************************** 相机生命周期函数 **********************************************/
 
     fun openCamera(mFacing: Int, surfaceTexture: SurfaceTexture? = null,
-                   cameraOpen: CameraOpenListener? = null, previewStrat: CameraPreviewListener? = null) {
+                   cameraOpen: CameraOpenListener? = null, previewListener: CameraPreviewListener? = null) {
 
         if(surfaceTexture != null) {
             mSurfaceTexture = surfaceTexture
         }
 
-        if(previewStrat != null){
-            mPreviewStrat = previewStrat
+        if(previewListener != null){
+            mPreviewListener = previewListener
         }
 
         cameraImpl.openCamera(mFacing, object : CameraImpl.CameraOpenCallback {
@@ -81,7 +82,7 @@ class Camera(context: Context): GCVInput() {
                 cameraOpen?.onCameraOpen()
 
                 if(surfaceTexture != null){
-                    startPreview(surfaceTexture, mPreviewStrat)
+                    startPreview(surfaceTexture, mPreviewListener)
                 }
             }
 
@@ -92,7 +93,7 @@ class Camera(context: Context): GCVInput() {
         })
     }
 
-    fun startPreview(surfaceTexture: SurfaceTexture, previewStartListener: CameraPreviewListener? = null) {
+    fun startPreview(surfaceTexture: SurfaceTexture, previewListener: CameraPreviewListener? = null) {
 
         if(state != CameraState.OPENED){
             // TODO 打log,Camera还没有正常打开，不应该进行 Preview 操作
@@ -106,12 +107,11 @@ class Camera(context: Context): GCVInput() {
 
             override fun onStart() {
                 state = CameraState.STARTED
-                previewStartListener?.onPreviewStart()
+                previewListener?.onPreviewStart()
             }
 
             override fun onPreviewFrame(previewData: ByteBuffer) {
-                // TODO 再做一层接口，将previewFrame数据返回上去，可以做很多事情
-//                Log.e("previewData", previewData.long.toString())
+                previewListener?.onPreviewFrame(previewData)
             }
 
             override fun onError() {
@@ -146,6 +146,11 @@ class Camera(context: Context): GCVInput() {
 
             }
         })
+    }
+
+
+    fun takePicture(cameraTakePicture: CameraTakePictureListener){
+        cameraImpl.takePicture(cameraTakePicture)
     }
 
 
