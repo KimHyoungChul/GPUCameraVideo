@@ -2,7 +2,6 @@
 // Created by 刘轩 on 2019/1/27.
 //
 
-#include <android/log.h>
 #include "FilterGroup.h"
 
 
@@ -30,9 +29,14 @@ void GCVBase::FilterGroup::_newFrameReadyAtTime(const GCVBase::MediaTime &time) 
 
     for(auto i = mTargets.begin(); i < mTargets.end(); i++){
         auto currentTarget =  * i;
+        currentTarget->_setOutputRotation(rotationFilterGroup);
         currentTarget->_setOutputFramebuffer(mOutputFilterGroupFramebuffer);
         currentTarget->_newFrameReadyAtTime(time);
     }
+}
+
+void GCVBase::FilterGroup::_setOutputRotation(const GCVBase::Rotation &mRotation) {
+    rotationFilterGroup = mRotation;
 }
 
 void GCVBase::FilterGroup::_setOutputFramebuffer(GCVBase::FrameBuffer *framebuffer) {

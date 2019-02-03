@@ -83,11 +83,11 @@ void GCVBase::Filter::newFrameReadyAtTime() {
                 1.0f,  1.0f,
         };
 
-        static const GLfloat texCoord[] = {
-                1.0f, 1.0f,
+        static const GLfloat texCoord[] = { // Filter只负责对纹理的像素做采样处理，但对纹理坐标同样不做任何处理
+                0.0f, 0.0f,
                 1.0f, 0.0f,
                 0.0f, 1.0f,
-                0.0f, 0.0f,
+                1.0f, 1.0f,
         };
 
         glUniform1i(uTextureuniform, 2);

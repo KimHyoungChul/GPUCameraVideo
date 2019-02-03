@@ -77,7 +77,11 @@ class SurfaceViewPreview(context: Context,
      * 添加录像组件。注意如果需要有滤镜效果，则录像组件需要挂在滤镜组上
      */
     override fun setRecorder(movieRecorder: GCVOutput) {
-        mFilterGroup?.addTarget(movieRecorder)
+        if(mFilterGroup != null){
+            mFilterGroup?.addTarget(movieRecorder)
+        }else {
+            mCamera.addTarget(this@SurfaceViewPreview)
+        }
     }
 
     override fun setFacing(facing: Int){

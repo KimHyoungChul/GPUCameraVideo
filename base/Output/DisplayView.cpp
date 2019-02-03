@@ -76,12 +76,8 @@ void GCVBase::DisplayView::_newFrameReadyAtTime(const MediaTime &time) {
                 1.0f,  1.0f,
         };
 
-        static const GLfloat texCoord[] = {
-                1.0f, 1.0f,
-                1.0f, 0.0f,
-                0.0f, 1.0f,
-                0.0f, 0.0f,
-        };
+        //static变量只会初始化一次，也就是说这个texCoord如果是static那么这个方法只会被调用一次！！！
+        const GLfloat * texCoord = CalculateDisplayRotation(rotationDisplayView);
 
         glUniform1i(uTextureuniform, 1);
         glVertexAttribPointer(aPositionAttribute, 2, GL_FLOAT, 0, 0, vertices);
@@ -98,5 +94,9 @@ void GCVBase::DisplayView::_newFrameReadyAtTime(const MediaTime &time) {
 
 void GCVBase::DisplayView::_setOutputFramebuffer(GCVBase::FrameBuffer *framebuffer) {
     mOutputDisplayFramebuffer = framebuffer;
+}
+
+void GCVBase::DisplayView::_setOutputRotation(const GCVBase::Rotation &rotation) {
+    rotationDisplayView = rotation;
 }
 

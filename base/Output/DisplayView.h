@@ -21,6 +21,8 @@ namespace GCVBase {
         int mDisplayWidth;
         int mDisplayHeight;
 
+        Rotation rotationDisplayView = Rotation::defaultRotation();
+
         GLProgram * mDisplayProgram;
         FrameBuffer *mOutputDisplayFramebuffer = NULL;
 
@@ -30,6 +32,7 @@ namespace GCVBase {
         ~DisplayView();
 
         virtual void _newFrameReadyAtTime(const MediaTime &time);
+        virtual void _setOutputRotation(const Rotation &rotation);
         virtual void _setOutputFramebuffer(FrameBuffer *framebuffer);
 
     };

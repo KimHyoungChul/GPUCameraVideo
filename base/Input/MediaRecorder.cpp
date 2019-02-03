@@ -174,7 +174,7 @@ void GCVBase::MediaRecorder::renderRecorderFramebuffer(GCVBase::FrameBuffer *fra
     glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    glActiveTexture(GL_TEXTURE1);
+    glActiveTexture(GL_TEXTURE4);
     glBindTexture(GL_TEXTURE_2D, framebuffer->texture());
 
     static const GLfloat vertices[] = {
@@ -184,14 +184,9 @@ void GCVBase::MediaRecorder::renderRecorderFramebuffer(GCVBase::FrameBuffer *fra
             1.0f,  1.0f,
     };
 
-    static const GLfloat texCoord[] = {
-            1.0f, 1.0f,
-            1.0f, 0.0f,
-            0.0f, 1.0f,
-            0.0f, 0.0f,
-    };
+    const GLfloat * texCoord = CalculateRecoderRotation(rotationMediaRecorder);
 
-    glUniform1i(uTextureuniform, 1);
+    glUniform1i(uTextureuniform, 4);
     glVertexAttribPointer(aPositionAttribute, 2, GL_FLOAT, 0, 0, vertices);
     glVertexAttribPointer(aTexCoordAttribute, 2, GL_FLOAT, 0, 0, texCoord);
 
@@ -206,7 +201,7 @@ void GCVBase::MediaRecorder::creatRecorderFramebuffer() {
         return;
     }
 
-    glActiveTexture(GL_TEXTURE2);
+    glActiveTexture(GL_TEXTURE3);
     glGenFramebuffers(1, &mRecorderFramebuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, mRecorderFramebuffer);
 
@@ -237,4 +232,8 @@ void GCVBase::MediaRecorder::bindRecorderFramebuffer() {
 
 void GCVBase::MediaRecorder::unBindRecorderFramebuffer() {
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void GCVBase::MediaRecorder::_setOutputRotation(const GCVBase::Rotation &rotation) {
+    rotationMediaRecorder = rotation;
 }

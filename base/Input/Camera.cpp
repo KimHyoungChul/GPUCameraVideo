@@ -26,7 +26,10 @@ std::string cameraFragmentShader =
                 "}\n";
 
 
-GCVBase::Camera::Camera() {
+GCVBase::Camera::Camera(int mFacing) {
+
+    mFacingMode = mFacing == 0 ? FacingMode::FacingBack : FacingMode::FacingFront;
+    rotationCamera = Rotation(rotationMode, mFacingMode);
 
     runSyncContextLooper(Context::getShareContext()->getContextLooper(), [=] {
         Context::makeShareContextAsCurrent();
@@ -108,10 +111,11 @@ GLuint GCVBase::Camera::getSurfaceTexture() {
 
 void GCVBase::Camera::onSurfaceChanged() {
 
-    /**
-     * TODO 这里的framebufferSize的宽高也要根据手机旋转的角度去判断横竖屏，以确定是否调换宽高
-     */
     runSyncContextLooper(Context::getShareContext()->getContextLooper(), [=] {
+        if(mOutputFrameBuffer){
+            delete mOutputFrameBuffer;
+        }
+//        Size framebufferSize = rotationMode == RotationMode::rotation0 ? Size(mPreviewWidth, mPreviewHeight) : Size(mPreviewHeight, mPreviewWidth);
         Size framebufferSize = Size(mPreviewWidth, mPreviewHeight);
         mOutputFrameBuffer = new FrameBuffer(framebufferSize, mOutputTextureOptions, Context::getShareContext());
     });
@@ -140,10 +144,7 @@ void GCVBase::Camera::surfaceTextureAvailable() {
                 1.0f,  1.0f,
         };
 
-        /**
-         * TODO 这个坐标要根据手机屏幕旋转的角度进行调整，以解决横竖屏切换造成的画面旋转问题
-         */
-        static const GLfloat texCoord[] = { //这里纹理坐标已经做了右旋处理
+        static const GLfloat texCoord[] = { //这里对纹理坐标不进行任何处理，在输出部分（DisplayView、MediaRecorder处做最终的处理）
                 0.0f, 0.0f,
                 1.0f, 0.0f,
                 0.0f, 1.0f,
@@ -172,7 +173,31 @@ void GCVBase::Camera::newFrameReadyAtTime(const MediaTime &time) {
     for(auto i = mTargets.begin(); i < mTargets.end(); i++){
         auto currentTarget =  * i;
         FilterGroup * filterGroup = (FilterGroup *) (jlong)currentTarget;
+        filterGroup->_setOutputRotation(rotationCamera);
         filterGroup->_setOutputFramebuffer(mOutputFrameBuffer);
         filterGroup->_newFrameReadyAtTime(time);
     }
 }
+
+void GCVBase::Camera::orientationChanged(int orientation) {
+    switch (orientation){
+        case 0:
+            rotationMode = RotationMode::rotation0;
+            break;
+        case 90:
+            rotationMode = RotationMode::rotation90;
+            break;
+        case 270:
+            rotationMode = RotationMode::rotation270;
+            break;
+        default:
+            break;
+    }
+    rotationCamera = Rotation(rotationMode, mFacingMode);
+}
+
+void GCVBase::Camera::facingChanged(int facing) {
+    mFacingMode = facing == 0 ? FacingMode::FacingBack : FacingMode::FacingFront;
+    rotationCamera = Rotation(rotationMode, mFacingMode);
+}
+

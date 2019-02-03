@@ -5,6 +5,7 @@
 #ifndef GPUCAMERAVIDEO_CAMERA_H
 #define GPUCAMERAVIDEO_CAMERA_H
 
+#include "Rotation.hpp"
 #include "Time.hpp"
 #include "Context.h"
 #include "GLProgram.h"
@@ -23,6 +24,10 @@ namespace GCVBase {
         int mPreviewWidth = 0;
         int mPreviewHeight = 0;
 
+        FacingMode mFacingMode;
+        RotationMode rotationMode;
+        Rotation rotationCamera = Rotation::defaultRotation();
+
         GLuint mOESTexture = 0;
 
         EglCore * mEglInstance = NULL;
@@ -35,14 +40,15 @@ namespace GCVBase {
         void newFrameReadyAtTime(const MediaTime &time);
 
     public:
-        jobject javaCamera = NULL;
 
-        Camera();
+        Camera(int mFacing);
         ~Camera();
 
         EglCore * getEglInstance();
 
         void onSurfaceChanged();
+        void facingChanged(int facing);
+        void orientationChanged(int orientation);
 
         void setPreviewWidth(int previewWidth){
             mPreviewWidth = previewWidth;

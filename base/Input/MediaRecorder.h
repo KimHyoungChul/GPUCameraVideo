@@ -40,6 +40,8 @@ namespace GCVBase {
 
         MediaBuffer<GLubyte *> *mediaBuffer  = NULL;
 
+        Rotation rotationMediaRecorder = Rotation::defaultRotation();
+
         FrameBuffer *mFinalFilterFramebuffer = NULL; //滤镜链的最后一个滤镜持有的FrameBuffer
 
         std::function<void (void)> mStartHandler = NULL;
@@ -68,6 +70,7 @@ namespace GCVBase {
         void cancelRecording(const std::function<void ()> &handler);
 
         virtual void _newFrameReadyAtTime(const MediaTime &time);
+        virtual void _setOutputRotation(const Rotation &rotation);
         virtual void _setOutputFramebuffer(FrameBuffer *framebuffer);
     };
 }

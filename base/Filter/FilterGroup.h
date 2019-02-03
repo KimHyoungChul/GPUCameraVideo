@@ -5,7 +5,7 @@
 #ifndef GPUCAMERAVIDEO_FILTERGROUP_H
 #define GPUCAMERAVIDEO_FILTERGROUP_H
 
-#include <NativeInput.h>
+#include "NativeInput.h"
 #include "Filter.h"
 
 namespace GCVBase {
@@ -23,10 +23,13 @@ namespace GCVBase {
         void addFilter(Filter * filter);
         void removeFilter(Filter * filter);
 
+        virtual void _setOutputRotation(const Rotation &rotation);
         virtual void _setOutputFramebuffer(FrameBuffer *framebuffer);
         virtual void _newFrameReadyAtTime(const MediaTime &time) ;
 
     private:
+
+        Rotation rotationFilterGroup = Rotation::defaultRotation();
 
         std::vector<Filter * > mFilterGroup;
 

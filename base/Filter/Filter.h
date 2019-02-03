@@ -6,6 +6,7 @@
 #define GPUCAMERAVIDEO_FILTER_H
 
 #include <string>
+#include "Rotation.hpp"
 #include "Time.hpp"
 #include "GLProgram.h"
 #include "FrameBuffer.h"

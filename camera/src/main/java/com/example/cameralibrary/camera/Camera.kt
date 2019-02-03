@@ -3,6 +3,7 @@ package com.example.cameralibrary.camera
 import android.content.Context
 import android.graphics.SurfaceTexture
 import android.hardware.Camera
+import android.util.Log
 import android.view.WindowManager
 import com.example.baselib.GCVInput
 import com.example.cameralibrary.camera.api.Camera1
@@ -51,7 +52,7 @@ class Camera(context: Context): GCVInput() {
     }
 
     fun creatNativeCamera(): Long {
-        inputObjectAdress = nativeCameraInit()
+        inputObjectAdress = nativeCameraInit(mFacing)
         return inputObjectAdress
     }
 
@@ -100,6 +101,10 @@ class Camera(context: Context): GCVInput() {
             return
         }
 
+        /**
+         * 这里是一个"偷懒"的操作，正确的姿势应当在外部通过 OrientationEventListener 接口监听旋转事件。
+         * 在手机从横向（90°）转到另一个横向（270°）时，并不会引起Activity的重建，因此这里会有漏洞。
+         */
         val displayOrientation = windowManager.defaultDisplay.rotation * 90
         setDisplayOrientation(displayOrientation)
 
@@ -174,6 +179,7 @@ class Camera(context: Context): GCVInput() {
         mFacing = facing
 
         cameraImpl.setFacing(facing)
+        nativeChangeCameraFacing(inputObjectAdress, facing)
 
         if (isCameraOpened()) { //前后置镜头切换的时候要关闭预览再打开
             stopPreview(object: FacingChangedCallback {
@@ -202,7 +208,8 @@ class Camera(context: Context): GCVInput() {
     }
 
     fun setDisplayOrientation(displayOrientation: Int){
-        cameraImpl.setDisplayOrientation(displayOrientation)
+//        cameraImpl.setDisplayOrientation(displayOrientation)
+        nativeChangeCamerOrientation(inputObjectAdress, displayOrientation)
     }
 
 
@@ -210,6 +217,9 @@ class Camera(context: Context): GCVInput() {
 
     /****************************************** native函数 **********************************************/
 
-    private external fun nativeCameraInit(): Long
+    private external fun nativeCameraInit(mFacing: Int): Long
 
+    private external fun nativeChangeCameraFacing(nativeCamera: Long, mFacing: Int)
+
+    private external fun nativeChangeCamerOrientation(nativeCamera: Long, orientation: Int)
 }

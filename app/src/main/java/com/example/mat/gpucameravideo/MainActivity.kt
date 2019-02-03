@@ -74,8 +74,8 @@ class MainActivity : AppCompatActivity(),
 
     override fun onPreviewReady() { //对应 startPreview 成功
         mFilterGroup = FilterGroup().apply {
-            addFilter(BlackFilter())
-            addFilter(ColorFilter())
+//            addFilter(BlackFilter())
+//            addFilter(ColorFilter())
         }
 
         preview?.setFilterGroup(mFilterGroup!!)
