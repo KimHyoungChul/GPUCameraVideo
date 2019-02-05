@@ -115,7 +115,6 @@ void GCVBase::Camera::onSurfaceChanged() {
         if(mOutputFrameBuffer){
             delete mOutputFrameBuffer;
         }
-//        Size framebufferSize = rotationMode == RotationMode::rotation0 ? Size(mPreviewWidth, mPreviewHeight) : Size(mPreviewHeight, mPreviewWidth);
         Size framebufferSize = Size(mPreviewWidth, mPreviewHeight);
         mOutputFrameBuffer = new FrameBuffer(framebufferSize, mOutputTextureOptions, Context::getShareContext());
     });
