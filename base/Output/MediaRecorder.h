@@ -44,10 +44,10 @@ namespace GCVBase {
 
         FrameBuffer *mFinalFilterFramebuffer = NULL; //滤镜链的最后一个滤镜持有的FrameBuffer
 
-        std::function<void (void)> mStartHandler = NULL;
-        std::function<void (void)> mPauseHandler = NULL;
-        std::function<void (void)> mFinishHandler = NULL;
-        std::function<void (void)> mCancelHandler = NULL;
+        std::function<void (void)> mStartCallback = NULL;
+        std::function<void (void)> mPauseCallback = NULL;
+        std::function<void (void)> mFinishCallback = NULL;
+        std::function<void (void)> mCancelCallback = NULL;
 
         void renderRecorderFramebuffer(FrameBuffer *framebuffer);
         void creatRecorderFramebuffer();

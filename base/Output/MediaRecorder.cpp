@@ -64,39 +64,39 @@ GCVBase::MediaRecorder::~MediaRecorder() {
 
 void GCVBase::MediaRecorder::startRecording(const std::function<void ()> &handler) {
     mIsRecording = true;
-    mStartHandler = handler;
+    mStartCallback = handler;
 
     runSyncContextLooper(recordContext->getContextLooper(), [=]{
         unsigned long size = (unsigned long) (mVideoSize.width * mVideoSize.height * 4);
         unsigned long alignSize = alignment_up((size), MemoryAligned);
         mRGBAData = new GLubyte[alignSize];
 
-        mediaEncoder->startEncoder(mStartHandler);
+        mediaEncoder->startEncoder(mStartCallback);
         mStartTime = MediaTime::Init();
-        mStartHandler = NULL;
+        mStartCallback = NULL;
     });
 }
 
 void GCVBase::MediaRecorder::pauseRecording(const std::function<void ()> &handler) {
     mIsRecording = false;
-    mPauseHandler = handler;
+    mPauseCallback = handler;
 
     runSyncContextLooper(recordContext->getContextLooper(), [=]{
-        mediaEncoder->pauseEncoder(mPauseHandler);
-        mPauseHandler = NULL;
+        mediaEncoder->pauseEncoder(mPauseCallback);
+        mPauseCallback = NULL;
     });
 }
 
 void GCVBase::MediaRecorder::finishRecording(const std::function<void ()> &handler) {
     mIsRecording = false;
-    mFinishHandler = handler;
+    mFinishCallback = handler;
 
     runSyncContextLooper(recordContext->getContextLooper(), [=]{
 
         if (!mEncoderIsFinished) {
             mEncoderIsFinished = true;
-            mediaEncoder->finishEncoder(mFinishHandler);
-            mFinishHandler = NULL;
+            mediaEncoder->finishEncoder(mFinishCallback);
+            mFinishCallback = NULL;
         }
     });
 }
@@ -104,11 +104,11 @@ void GCVBase::MediaRecorder::finishRecording(const std::function<void ()> &handl
 void GCVBase::MediaRecorder::cancelRecording(const std::function<void ()> &handler) {
     mIsRecording = false;
     mCancelRecording = true;
-    mCancelHandler = handler;
+    mCancelCallback = handler;
 
     runSyncContextLooper(recordContext->getContextLooper(), [=]{
-        mediaEncoder->cancelEncoder(mCancelHandler);
-        mCancelHandler = NULL;
+        mediaEncoder->cancelEncoder(mCancelCallback);
+        mCancelCallback = NULL;
     });
 }
 

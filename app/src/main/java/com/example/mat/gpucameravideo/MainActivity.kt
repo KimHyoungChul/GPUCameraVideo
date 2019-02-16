@@ -68,7 +68,7 @@ class MainActivity : AppCompatActivity(),
 
     }
 
-    override fun onPreviewChanged(width: Int, height: Int) { //对应onSurfaceChange
+    override fun onPreviewChanged(width: Int, height: Int) { //对应onSurfaceChange TODO 这里还应该回调Camera支持的颜色格式
         movieRecorder = MovieRecorder(savePath, width, height, (width * height * 6.51).toLong(), 0)
     }
 

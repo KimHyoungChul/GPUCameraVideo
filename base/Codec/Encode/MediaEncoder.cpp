@@ -219,11 +219,9 @@ void GCVBase::MediaEncoder::newFrameEncodeAudio(GCVBase::MediaBuffer<uint8_t *> 
         size_t outputSize = 0;
         uint8_t *input = AMediaCodec_getInputBuffer(mAudioMediaCodec, (size_t)inputBuffer, &outputSize);
         memset(input, 0, outputSize);
-//        memcpy(input, buffer->mediaData, (size_t) buffer->metaData[FrameSize]);
         memcpy(input, buffer->mediaData, (size_t) outputSize);
 
         uint64_t time = (uint64_t)getCurrentTime();
-//        AMediaCodec_queueInputBuffer(mAudioMediaCodec, (size_t)inputBuffer, 0, (size_t) buffer->metaData[FrameSize], time, 0);
         AMediaCodec_queueInputBuffer(mAudioMediaCodec, (size_t)inputBuffer, 0, (size_t) outputSize, time, 0);
         AMediaCodecBufferInfo bufferInfo;
         recordCodecBuffer(&bufferInfo, mAudioMediaCodec, mAudioTrackIndex);

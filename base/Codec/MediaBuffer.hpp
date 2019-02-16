@@ -6,6 +6,7 @@
 #define GPUCAMERAVIDEO_MEDIABUFFER_H
 
 #include <stdio.h>
+#include <string>
 #include <unordered_map>
 #include "Time.hpp"
 
