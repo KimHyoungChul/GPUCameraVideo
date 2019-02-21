@@ -9,6 +9,8 @@ import android.hardware.Camera
 
 class CameraAttributes(cameraInfo: Camera.CameraInfo, cameraParameters: Camera.Parameters) {
 
+//    val mPreviewSizes: CameraSizeMap  =  CameraSizeMap()
+
     /**
      * orientation 表示相机图像的方向。它的值是相机图像顺时针旋转到设备自然方向一致时的角度。
      *
@@ -21,5 +23,11 @@ class CameraAttributes(cameraInfo: Camera.CameraInfo, cameraParameters: Camera.P
     val sensorOrientation: Int = cameraInfo.orientation
 
     val previewSizes: Array<CameraSize> = cameraParameters.supportedPreviewSizes.map { CameraSize(it) }.toTypedArray()
+
+//    init {
+//        for (size in cameraParameters.supportedPreviewSizes) {
+//            mPreviewSizes.add(CameraSize(size.width, size.height))
+//        }
+//    }
 
 }

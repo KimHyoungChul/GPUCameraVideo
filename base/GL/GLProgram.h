@@ -29,7 +29,7 @@ namespace GCVBase {
 
     public:
 
-        GLProgram(std::string &vertexShaderString, std::string &fragmentShaderString);
+        GLProgram(const std::string &vertexShaderString, const std::string &fragmentShaderString);
 
         bool linkProgram();
         void useProgram();

@@ -4,7 +4,7 @@
 #include <thread>
 #include "GLProgram.h"
 
-GCVBase::GLProgram::GLProgram(std::string &vertexShaderString, std::string &fragmentShaderString) {
+GCVBase::GLProgram::GLProgram(const std::string &vertexShaderString, const std::string &fragmentShaderString) {
 
     mProgram = glCreateProgram();
 

@@ -12,8 +12,11 @@ cmake_minimum_required(VERSION 3.4.1)
 
 set(CAMERA_CPP ../camera/src/main/cpp)
 set(CODEC_CPP ../codec/src/main/cpp)
+set(FILTER_CPP ../filter/src/main/cpp)
+set(BASELIB_CPP ../baselib/src/main/cpp)
 
 set(BASE_GL ../base/GL)
+
 set(BASE_BASE ../base/Base)
 set(BASE_Filter ../base/Filter)
 set(BASE_Looper ../base/Looper)
@@ -23,9 +26,14 @@ set(BASE_Codec ../base/Codec)
 set(BASE_Codec_Decode ../base/Codec/Decode)
 set(BASE_Codec_Encode ../base/Codec/Encode)
 
+set(BASE_libyuv ../src/main/jniLibs/include)
+
 include_directories(GPUCameraVideo
                     ${CODEC_CPP}
                     ${CAMERA_CPP}
+                    ${FILTER_CPP}
+                    ${BASELIB_CPP}
+
                     ${BASE_GL}
                     ${BASE_BASE}
                     ${BASE_Filter}
@@ -34,12 +42,21 @@ include_directories(GPUCameraVideo
                     ${BASE_Output}
                     ${BASE_Codec}
                     ${BASE_Codec_Decode}
-                    ${BASE_Codec_Encode})
+                    ${BASE_Codec_Encode}
+
+                    ${BASE_libyuv})
+
+include_directories(
+            ${CMAKE_SOURCE_DIR}/src/main/jniLibs/include
+            )
 
 file(
     GLOB SOURCE_FILES
     ${CAMERA_CPP}/*.cpp
     ${CODEC_CPP}/*.cpp
+    ${FILTER_CPP}/*.cpp
+    ${BASELIB_CPP}/*.cpp
+
     ${BASE_GL}/*.cpp
     ${BASE_BASE}/*.cpp
     ${BASE_Looper}/*.cpp
@@ -47,9 +64,14 @@ file(
     ${BASE_Output}/*.cpp
     ${BASE_Filter}/*.cpp
     ${BASE_Codec}/*.cpp
+    ${BASE_Codec}/*.h
     ${BASE_Codec_Decode}/*.cpp
+    ${BASE_Codec_Decode}/*.hpp
     ${BASE_Codec_Encode}/*.cpp
-    )
+    ${BASE_Codec_Encode}/*.hpp
+
+    ${BASE_libyuv}/*.h )
+
 
 add_library( # Sets the name of the library.
              codec-lib
@@ -61,6 +83,17 @@ add_library( # Sets the name of the library.
               ${SOURCE_FILES}
               )
 
+add_library(
+          yuv
+          SHARED
+          IMPORTED
+          )
+
+set_target_properties(
+          yuv
+          PROPERTIES IMPORTED_LOCATION
+          ${CMAKE_SOURCE_DIR}/src/main/jniLibs/armeabi-v7a/libyuv.so
+          )
 
 
 # Searches for a specified prebuilt library and stores the path as a
@@ -86,6 +119,8 @@ target_link_libraries( # Specifies the target library.
                        # Links the target library to the log library
                        # included in the NDK.
                        android
+                       mediandk
                        EGL
                        GLESv2
+                       yuv
                        ${log-lib} )

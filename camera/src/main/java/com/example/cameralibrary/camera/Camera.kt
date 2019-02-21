@@ -1,109 +1,39 @@
 package com.example.cameralibrary.camera
 
 import android.content.Context
+import android.graphics.SurfaceTexture
+import android.hardware.Camera
 import android.util.Log
 import android.view.WindowManager
+import com.example.baselib.GCVInput
 import com.example.cameralibrary.camera.api.Camera1
-import com.example.cameralibrary.camera.api.CameraApi
-import com.example.cameralibrary.preview.CameraSurfaceTexture
+import com.example.cameralibrary.camera.api.CameraImpl
+import com.example.cameralibrary.preview.PreviewImpl
+import com.example.cameralibrary.preview.PreviewImpl.CameraOpenListener
+import com.example.cameralibrary.preview.PreviewImpl.CameraPreviewListener
+import com.example.cameralibrary.preview.PreviewImpl.CameraTakePictureListener
 import java.nio.ByteBuffer
 
 /**
  * Created by liuxuan on 2018/12/27
  */
-class Camera(context: Context) {
+class Camera(context: Context): GCVInput() {
 
-    private val cameraApi: CameraApi
+    private val cameraImpl: CameraImpl
     private val windowManager: WindowManager
+    private var mCamera: Camera? = null
+    private var mSurfaceTexture: SurfaceTexture? = null
+    private var mPreviewListener: CameraPreviewListener? = null
 
     private var state: CameraState = CameraState.RELEASED
-    private var displayOrientation: Int = 0
-    private var nativeInputCameraAddress: Long = 0
+
+    private var mFacing: Int = 0
+    private var mFlash: Int = 0
+    private var mAutoFocus: Boolean = false
 
     init {
-        cameraApi = Camera1() //暂时不考虑Camera2接口，但保留
+        cameraImpl = Camera1() //暂时不考虑Camera2接口，但保留
         windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-    }
-
-    fun creatNativeCamera(): Long{
-        nativeInputCameraAddress = nativeCameraInit()
-        return nativeInputCameraAddress
-    }
-
-
-    fun openCamera(cameraSurfaceTexture: CameraSurfaceTexture?, width: Int, height:Int) {
-        cameraApi.openCamera(object : CameraApi.CameraOpenCallback{
-            override fun onOpen(cameraAttributes: CameraAttributes) {
-                displayOrientation = windowManager.defaultDisplay.rotation * 90
-
-                if (cameraSurfaceTexture != null) {
-                    val previewOrientation = (cameraAttributes.sensorOrientation - displayOrientation + 360) % 360
-                    val previewSize = CameraSizeCalculator(cameraAttributes.previewSizes)
-                            .findBestPreviewSize( //从相机支持的预览宽、高中选出最合适的
-                                    when (previewOrientation % 180 == 0) { // 是否是横屏,若是横屏的话，宽和高相互调换
-                                        true -> CameraSize(width, height)
-                                        false -> CameraSize(height, width)
-                            })
-                    startPreview(cameraSurfaceTexture, previewSize, previewOrientation)
-                }
-                state = CameraState.OPENED
-            }
-
-            override fun onError() {
-                // TODO "添加报错 log"
-            }
-        })
-
-
-    }
-
-    fun startPreview(cameraSurfaceTexture: CameraSurfaceTexture, previewSize: CameraSize, previewOrientation: Int){
-        cameraSurfaceTexture.setDefaultBufferSize(previewSize.width, previewSize.height)
-        cameraSurfaceTexture.size = when(previewOrientation % 180) {
-            0 -> previewSize
-            else -> CameraSize(previewSize.height, previewSize.width)
-        }
-
-        cameraApi.startPreview(cameraSurfaceTexture, previewSize, previewOrientation, object : CameraApi.PreViewStartCallback {
-            override fun onStart() {
-                state = CameraState.STARTED
-            }
-
-            override fun onPreviewFrame(previewData: ByteBuffer) {
-                // TODO 再做一层接口，将previewFrame数据返回上去，可以做很多事情
-                Log.e("previewData", previewData.long.toString())
-            }
-
-            override fun onError() {
-
-            }
-        })
-    }
-
-    fun stopPreview(){
-        cameraApi.stopPreview(object : CameraApi.PreviewStopCallback{
-            override fun onStop() {
-                state = CameraState.STOPPED
-                closeCamera()
-            }
-
-            override fun onError() {
-
-            }
-
-        })
-    }
-
-    fun closeCamera() {
-        cameraApi.closeCamera(object : CameraApi.CameraCloseCallback {
-            override fun onClose() {
-                state = CameraState.RELEASED
-            }
-
-            override fun onError() {
-
-            }
-        })
     }
 
     private enum class CameraState {
@@ -113,6 +43,183 @@ class Camera(context: Context) {
         RELEASED;
     }
 
-    private external fun nativeCameraInit(): Long
+    interface FacingChangedCallback {
+        fun onFacingChanged()
+    }
 
+    fun isCameraOpened(): Boolean {
+        return state == CameraState.OPENED || state == CameraState.STARTED
+    }
+
+    fun creatNativeCamera(): Long {
+        inputObjectAdress = nativeCameraInit(mFacing)
+        return inputObjectAdress
+    }
+
+    fun setPreviewImpl(previewImpl: PreviewImpl){
+        cameraImpl.setPreviewImpl(previewImpl)
+    }
+
+
+    /************************************** 相机生命周期函数 **********************************************/
+
+    fun openCamera(mFacing: Int, surfaceTexture: SurfaceTexture? = null,
+                   cameraOpen: CameraOpenListener? = null, previewListener: CameraPreviewListener? = null) {
+
+        if(surfaceTexture != null) {
+            mSurfaceTexture = surfaceTexture
+        }
+
+        if(previewListener != null){
+            mPreviewListener = previewListener
+        }
+
+        cameraImpl.openCamera(mFacing, object : CameraImpl.CameraOpenCallback {
+            override fun onOpen(mCamera:Camera) {
+                this@Camera.mCamera = mCamera
+
+                state = CameraState.OPENED
+
+                cameraOpen?.onCameraOpen()
+
+                if(surfaceTexture != null){
+                    startPreview(surfaceTexture, mPreviewListener)
+                }
+            }
+
+            override fun onError() {
+                // TODO "添加报错 log"
+                cameraOpen?.onOpenError()
+            }
+        })
+    }
+
+    fun startPreview(surfaceTexture: SurfaceTexture, previewListener: CameraPreviewListener? = null) {
+
+        if(state != CameraState.OPENED){
+            // TODO 打log,Camera还没有正常打开，不应该进行 Preview 操作
+            return
+        }
+
+        /**
+         * 这里是一个"偷懒"的操作，正确的姿势应当在外部通过 OrientationEventListener 接口监听旋转事件。
+         * 在手机从横向（90°）转到另一个横向（270°）时，并不会引起Activity的重建，因此这里会有漏洞。
+         */
+        val displayOrientation = windowManager.defaultDisplay.rotation * 90
+        setDisplayOrientation(displayOrientation)
+
+        cameraImpl.startPreview(surfaceTexture, object : CameraImpl.PreviewStartCallback {
+
+            override fun onStart() {
+                state = CameraState.STARTED
+                previewListener?.onPreviewStart()
+            }
+
+            override fun onPreviewFrame(previewData: ByteBuffer) {
+                previewListener?.onPreviewFrame(previewData)
+            }
+
+            override fun onError() {
+
+            }
+        })
+    }
+
+    fun stopPreview(faceChangedCallback: FacingChangedCallback? = null) {
+
+        cameraImpl.stopPreview(object : CameraImpl.PreviewStopCallback {
+            override fun onStop() {
+                state = CameraState.STOPPED
+                closeCamera(faceChangedCallback)
+            }
+
+            override fun onError() {
+
+            }
+
+        })
+    }
+
+    fun closeCamera(faceChangedCallback: FacingChangedCallback? = null) {
+        cameraImpl.closeCamera(object : CameraImpl.CameraCloseCallback {
+            override fun onClose() {
+                state = CameraState.RELEASED
+                faceChangedCallback?.onFacingChanged()
+            }
+
+            override fun onError() {
+
+            }
+        })
+    }
+
+
+    fun takePicture(cameraTakePicture: CameraTakePictureListener){
+        cameraImpl.takePicture(cameraTakePicture)
+    }
+
+
+    /************************************** 切换相机参数函数 **********************************************/
+
+    fun setFlash(flash: Int) {
+        if (mFlash == flash) {
+            return
+        }
+        cameraImpl.setFlash(flash)
+    }
+
+    fun getCameraFacing(): Int{
+        return mFacing
+    }
+
+    fun setFacing(facing: Int) {
+        if (mFacing == facing) {
+            return
+        }
+        mFacing = facing
+
+        cameraImpl.setFacing(facing)
+        nativeChangeCameraFacing(inputObjectAdress, facing)
+
+        if (isCameraOpened()) { //前后置镜头切换的时候要关闭预览再打开
+            stopPreview(object: FacingChangedCallback {
+                override fun onFacingChanged() {
+                    if(mSurfaceTexture != null) {
+                        openCamera(facing, mSurfaceTexture)
+                    }
+                }
+            })
+        }
+    }
+
+    fun setAutoFocus(autoFocus: Boolean) {
+        if (mAutoFocus == autoFocus) {
+            return
+        }
+        cameraImpl.setAutoFocus(autoFocus)
+    }
+
+    fun setAspectRatio(ratio: AspectRatio): Boolean {
+        return cameraImpl.setAspectRatio(ratio)
+    }
+
+    fun getSupportedAspectRatios(): Set<AspectRatio>{
+        return cameraImpl.getSupportedAspectRatios()
+    }
+
+    fun setDisplayOrientation(displayOrientation: Int){
+//        cameraImpl.setDisplayOrientation(displayOrientation)
+        nativeChangeCamerOrientation(inputObjectAdress, displayOrientation)
+    }
+
+
+
+
+    /****************************************** native函数 **********************************************/
+
+    private external fun nativeCameraInit(mFacing: Int): Long
+
+    private external fun nativeChangeCameraFacing(nativeCamera: Long, mFacing: Int)
+
+    private external fun nativeChangeCamerOrientation(nativeCamera: Long, orientation: Int)
 }

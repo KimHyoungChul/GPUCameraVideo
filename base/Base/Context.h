@@ -30,6 +30,7 @@ namespace GCVBase {
         void setNativeWindow(ANativeWindow * window);
         void setEglInstance(EglCore * eglInstance);
         EglCore * getEglInstance();
+        void useAsCurrentContext();
 
         JNIEnv * getEnv() const;
 

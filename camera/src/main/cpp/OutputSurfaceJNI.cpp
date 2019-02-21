@@ -5,20 +5,27 @@
 #include <android/native_window_jni.h>
 #include "Context.h"
 #include "camera.h"
+#include "DisplayView.h"
 
 using namespace GCVBase;
 
 extern "C" {
 
-jlong Java_com_example_cameralibrary_preview_CameraSurfaceView_nativeSurfaceWindowInit(JNIEnv *env, jobject obj, jobject surface){
+jlong Java_com_example_cameralibrary_preview_surfaceview_SurfaceCallback_nativeSurfaceWindowInit(JNIEnv *env, jobject obj, jobject surface){
 
     Context::initSharedContext(env);
     ANativeWindow * nativeWindow = ANativeWindow_fromSurface(env, surface);
-    Context::getShareContext()->setNativeWindow(nativeWindow);
-    return 0;
+    DisplayView * displayView = NULL;
+
+    runSyncContextLooper(Context::getShareContext()->getContextLooper(), [&displayView, &nativeWindow]{
+        Context::getShareContext()->setNativeWindow(nativeWindow);
+        displayView = new DisplayView(ANativeWindow_getWidth(nativeWindow), ANativeWindow_getHeight(nativeWindow));
+    });
+
+    return (jlong)displayView;
 }
 
-jint Java_com_example_cameralibrary_preview_CameraSurfaceView_nativeGenTexture(JNIEnv *env, jobject obj, jlong nativeCamera) {
+jint Java_com_example_cameralibrary_preview_surfaceview_SurfaceCallback_nativeGenTexture(JNIEnv *env, jobject obj, jlong nativeCamera) {
     if(!nativeCamera){
         return 0;
     }
@@ -28,7 +35,7 @@ jint Java_com_example_cameralibrary_preview_CameraSurfaceView_nativeGenTexture(J
     return camera -> getSurfaceTexture();
 }
 
-void Java_com_example_cameralibrary_preview_CameraSurfaceView_onSurfaceTextureAvailable(JNIEnv *env, jobject obj, jlong nativeCamera) {
+void Java_com_example_cameralibrary_preview_surfaceview_SurfaceCallback_onSurfaceTextureAvailable(JNIEnv *env, jobject obj, jlong nativeCamera) {
     if (!nativeCamera) {
         return;
     }
@@ -39,7 +46,7 @@ void Java_com_example_cameralibrary_preview_CameraSurfaceView_onSurfaceTextureAv
 
 }
 
-void Java_com_example_cameralibrary_preview_CameraSurfaceView_surfaceTextureAvailable(JNIEnv *env, jobject obj, jlong nativeCamera) {
+void Java_com_example_cameralibrary_preview_surfaceview_SurfaceCallback_surfaceTextureAvailable(JNIEnv *env, jobject obj, jlong nativeCamera) {
     if(!nativeCamera){
         return ;
     }
@@ -48,7 +55,7 @@ void Java_com_example_cameralibrary_preview_CameraSurfaceView_surfaceTextureAvai
     camera -> surfaceTextureAvailable();
 }
 
-void Java_com_example_cameralibrary_preview_CameraSurfaceView_nativeOnSurfaceChanged(JNIEnv *env, jobject obj, jlong nativeCamera, jint width, jint height) {
+void Java_com_example_cameralibrary_preview_surfaceview_SurfaceCallback_nativeOnSurfaceChanged(JNIEnv *env, jobject obj, jlong nativeCamera, jint width, jint height) {
     if(!nativeCamera){
         return ;
     }
@@ -56,6 +63,7 @@ void Java_com_example_cameralibrary_preview_CameraSurfaceView_nativeOnSurfaceCha
     Camera * camera = (Camera *)nativeCamera;
     camera ->setPreviewWidth(width);
     camera ->setPreviewHeight(height);
+    camera->onSurfaceChanged();
 }
 
 }

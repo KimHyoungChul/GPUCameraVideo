@@ -5,12 +5,15 @@
 #ifndef GPUCAMERAVIDEO_CAMERA_H
 #define GPUCAMERAVIDEO_CAMERA_H
 
-#include <Context.h>
-#include <GLProgram.h>
+#include "Rotation.hpp"
+#include "Time.hpp"
+#include "Context.h"
+#include "GLProgram.h"
+#include "NativeInput.h"
 
 namespace GCVBase {
 
-    class Camera {
+    class Camera : NativeInput{
 
     private:
 
@@ -21,6 +24,10 @@ namespace GCVBase {
         int mPreviewWidth = 0;
         int mPreviewHeight = 0;
 
+        FacingMode mFacingMode;
+        RotationMode rotationMode;
+        Rotation rotationCamera = Rotation::defaultRotation();
+
         GLuint mOESTexture = 0;
 
         EglCore * mEglInstance = NULL;
@@ -30,13 +37,18 @@ namespace GCVBase {
         static std::string VertexShared();
         static std::string FragmentShared();
 
-    public:
-        jobject javaCamera = NULL;
+        void newFrameReadyAtTime(const MediaTime &time);
 
-        Camera();
+    public:
+
+        Camera(int mFacing);
         ~Camera();
 
         EglCore * getEglInstance();
+
+        void onSurfaceChanged();
+        void facingChanged(int facing);
+        void orientationChanged(int orientation);
 
         void setPreviewWidth(int previewWidth){
             mPreviewWidth = previewWidth;
@@ -50,6 +62,7 @@ namespace GCVBase {
         GLuint getSurfaceTexture();
 
         void surfaceTextureAvailable();
+
 
 
 

@@ -3,9 +3,11 @@
 //
 
 #include <android/log.h>
+#include <Size.hpp>
+#include <FilterGroup.h>
 #include "Camera.h"
 
-std::string vertexShader =
+std::string cameraVertexShader =
                 "attribute vec4 aPosition;\n"
                 "attribute vec4 aTexCoord;\n"
                 "varying vec2 vTexCoord;\n"
@@ -14,7 +16,7 @@ std::string vertexShader =
                 "   vTexCoord = aTexCoord.xy;\n"
                 "}\n";
 
-std::string fragmentShader =
+std::string cameraFragmentShader =
                 "#extension GL_OES_EGL_image_external : require\n"
                 "precision mediump float;\n"
                 "varying vec2 vTexCoord;\n"
@@ -24,14 +26,17 @@ std::string fragmentShader =
                 "}\n";
 
 
-GCVBase::Camera::Camera() {
+GCVBase::Camera::Camera(int mFacing) {
+
+    mFacingMode = mFacing == 0 ? FacingMode::FacingBack : FacingMode::FacingFront;
+    rotationCamera = Rotation(rotationMode, mFacingMode);
 
     runSyncContextLooper(Context::getShareContext()->getContextLooper(), [=] {
         Context::makeShareContextAsCurrent();
 
         __android_log_print(ANDROID_LOG_ERROR, "Camera", "Camera Thread is %u", std::this_thread::get_id());
 
-        mCameraProgram = new GLProgram(vertexShader, fragmentShader);
+        mCameraProgram = new GLProgram(cameraVertexShader, cameraFragmentShader);
 
         if(!mCameraProgram->isProgramLinked()){
 
@@ -41,8 +46,9 @@ GCVBase::Camera::Camera() {
             }
         }
 
-        mCameraProgram->useProgram();
-
+        aPositionAttribute = mCameraProgram->getAttributeIndex("aPosition");
+        aTexCoordAttribute = mCameraProgram->getAttributeIndex("aTexCoord");
+        uTextureuniform = mCameraProgram->getuniformIndex("uTexture");
     });
 
 }
@@ -52,11 +58,11 @@ GCVBase::Camera::~Camera() {
 }
 
 std::string GCVBase::Camera::VertexShared() {
-    return vertexShader;
+    return cameraVertexShader;
 }
 
 std::string GCVBase::Camera::FragmentShared() {
-    return fragmentShader;
+    return cameraFragmentShader;
 }
 
 GCVBase::EglCore *GCVBase::Camera::getEglInstance() {
@@ -103,20 +109,29 @@ GLuint GCVBase::Camera::getSurfaceTexture() {
     return mOESTexture;
 }
 
+void GCVBase::Camera::onSurfaceChanged() {
+
+    runSyncContextLooper(Context::getShareContext()->getContextLooper(), [=] {
+        if(mOutputFrameBuffer){
+            delete mOutputFrameBuffer;
+        }
+        Size framebufferSize = Size(mPreviewWidth, mPreviewHeight);
+        mOutputFrameBuffer = new FrameBuffer(framebufferSize, mOutputTextureOptions, Context::getShareContext());
+    });
+}
+
 void GCVBase::Camera::surfaceTextureAvailable() {
     glFlush();
 
     runSyncContextLooper(Context::getShareContext()->getContextLooper(), [=]{
-
         Context::makeShareContextAsCurrent();
         mCameraProgram->useProgram();
 
-        __android_log_print(ANDROID_LOG_ERROR, "surfaceTextureAvailable", "surfaceTextureAvailable Thread is %u", std::this_thread::get_id());
+        glEnableVertexAttribArray(aPositionAttribute);
+        glEnableVertexAttribArray(aTexCoordAttribute);
 
-        glViewport(0, 0, mPreviewWidth, mPreviewHeight);
-
-        glClear(GL_COLOR_BUFFER_BIT);
         glClearColor(0, 0, 0, 0);
+        glClear(GL_COLOR_BUFFER_BIT);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_EXTERNAL_OES, mOESTexture);
@@ -128,29 +143,60 @@ void GCVBase::Camera::surfaceTextureAvailable() {
                 1.0f,  1.0f,
         };
 
-        static const GLfloat texCoord[] = { //这里纹理坐标已经做了右旋处理
-                1.0f, 1.0f,
+        static const GLfloat texCoord[] = { //这里对纹理坐标不进行任何处理，在输出部分（DisplayView、MediaRecorder处做最终的处理）
+                0.0f, 0.0f,
                 1.0f, 0.0f,
                 0.0f, 1.0f,
-                0.0f, 0.0f,
+                1.0f, 1.0f,
         };
-
-        glEnableVertexAttribArray(aPositionAttribute);
-        glEnableVertexAttribArray(aTexCoordAttribute);
-
-        aPositionAttribute = mCameraProgram->getAttributeIndex("aPosition");
-        aTexCoordAttribute = mCameraProgram->getAttributeIndex("aTexCoord");
-        uTextureuniform = mCameraProgram->getuniformIndex("uTexture");
 
         glUniform1i(uTextureuniform, 0);
         glVertexAttribPointer(aPositionAttribute, 2, GL_FLOAT, 0, 0, vertices);
         glVertexAttribPointer(aTexCoordAttribute, 2, GL_FLOAT, 0, 0, texCoord);
 
-        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+        mOutputFrameBuffer->bindFramebuffer();
 
-        Context::getShareContext()->getEglInstance()->swapToScreen();
+        glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); //只需要在该步骤之前绑定帧缓冲即可，该步骤所有的绘制都会渲染到帧缓冲中的纹理上
+
+        mOutputFrameBuffer->unbindFramebuffer(); // DisplayView绘制之前必须解绑帧缓冲对象，否则系统自带的帧缓冲（0）渲染不出来！！！！！！！
 
         glDisableVertexAttribArray(aPositionAttribute);
         glDisableVertexAttribArray(aTexCoordAttribute);
+
+        MediaTime time = MediaTime((int64_t)currentTimeOfMilliseconds(), 60, TimeFlag_Init);
+        newFrameReadyAtTime(time);
     });
 }
+
+void GCVBase::Camera::newFrameReadyAtTime(const MediaTime &time) {
+    for(auto i = mTargets.begin(); i < mTargets.end(); i++){
+        auto currentTarget =  * i;
+        FilterGroup * filterGroup = (FilterGroup *) (jlong)currentTarget;
+        filterGroup->_setOutputRotation(rotationCamera);
+        filterGroup->_setOutputFramebuffer(mOutputFrameBuffer);
+        filterGroup->_newFrameReadyAtTime(time);
+    }
+}
+
+void GCVBase::Camera::orientationChanged(int orientation) {
+    switch (orientation){
+        case 0:
+            rotationMode = RotationMode::rotation0;
+            break;
+        case 90:
+            rotationMode = RotationMode::rotation90;
+            break;
+        case 270:
+            rotationMode = RotationMode::rotation270;
+            break;
+        default:
+            break;
+    }
+    rotationCamera = Rotation(rotationMode, mFacingMode);
+}
+
+void GCVBase::Camera::facingChanged(int facing) {
+    mFacingMode = facing == 0 ? FacingMode::FacingBack : FacingMode::FacingFront;
+    rotationCamera = Rotation(rotationMode, mFacingMode);
+}
+

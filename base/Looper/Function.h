@@ -5,7 +5,7 @@
 #ifndef GPUCAMERAVIDEO_FUNCTION_H
 #define GPUCAMERAVIDEO_FUNCTION_H
 
-#include "ConditionLock.h"
+#include "ConditionLock.hpp"
 
 namespace GCVBase {
 
