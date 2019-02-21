@@ -22,6 +22,9 @@ namespace GCVBase {
         Looper * encoderLooper = NULL;
         EncoderConfig mEncoderConfig;
 
+        uint64_t startTime = 0;
+        uint64_t writeSampleDataTime = 0;
+
         AMediaCodec *mVideoMediaCodec = NULL;
         AMediaCodec *mAudioMediaCodec = NULL;
         AMediaMuxer *mMuxer = NULL;
@@ -41,6 +44,7 @@ namespace GCVBase {
 
     public:
         MediaEncoder(const GCVBase::EncoderConfig &config);
+        ~MediaEncoder();
 
         void startEncoder(std::function<void(void)> startHandler = NULL);
         void pauseEncoder(std::function<void(void)> pauseHandler = NULL);

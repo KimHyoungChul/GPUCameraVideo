@@ -2,6 +2,7 @@ package com.example.codeclibrary
 
 import android.media.MediaCodecInfo
 import android.media.MediaCodecList
+import android.media.MediaFormat
 import android.os.Build
 import android.util.Log
 import com.example.baselib.GCVOutput
@@ -18,14 +19,14 @@ class MovieRecorder(savepath: String, width: Int, height: Int, bitRate: Long, ou
         var colorFormat: Int = 0
         var bitRateMode: Int = -1
 
-        val numCodecs = MediaCodecList.getCodecCount()
+        val numCodecs = MediaCodecList.getCodecCount() // 获取所有支持编解码器数量
         var codecInfo: MediaCodecInfo? = null
 
         var i = 0
         while (i < numCodecs && codecInfo == null) {
-            val info: MediaCodecInfo = MediaCodecList.getCodecInfoAt(i)
-            if (info.isEncoder) {
-                val types = info.supportedTypes
+            val info: MediaCodecInfo = MediaCodecList.getCodecInfoAt(i) // 编解码器相关性信息存储在MediaCodecInfo中
+            if (info.isEncoder) { // 判断是否为编码器
+                val types = info.supportedTypes // 获取编码器支持的MIME类型，并进行匹配
 
                 for (j in types.indices) {
                     if (types[j] == "video/avc") {
@@ -50,9 +51,9 @@ class MovieRecorder(savepath: String, width: Int, height: Int, bitRate: Long, ou
                 encoderCapabilities.isBitrateModeSupported(MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CQ) ->
                     bitRateMode = MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CQ
                 encoderCapabilities.isBitrateModeSupported(MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR) ->
-                    bitRateMode = MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR
-                encoderCapabilities.isBitrateModeSupported(MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR) ->
                     bitRateMode = MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_CBR
+                encoderCapabilities.isBitrateModeSupported(MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR) ->
+                    bitRateMode = MediaCodecInfo.EncoderCapabilities.BITRATE_MODE_VBR
             }
         }
 

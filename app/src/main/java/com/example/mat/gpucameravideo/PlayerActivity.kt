@@ -5,6 +5,10 @@ import android.support.v7.app.AppCompatActivity
 import android.widget.Button
 import com.example.codeclibrary.MoviePlayer
 import com.example.codeclibrary.playerview.SurfacePlayerview
+import android.text.TextUtils
+import android.media.MediaMetadataRetriever
+import android.util.Log
+
 
 /**
  * Created by liuxuan on 2019/2/7
@@ -16,7 +20,7 @@ class PlayerActivity : AppCompatActivity(), SurfacePlayerview.PreviewLifeListene
     private var moviePlayer: MoviePlayer? = null
     private var btn: Button? = null
 
-    private var moivePath : String = "/storage/emulated/0/test1536047840381.mp4"
+    private var moivePath : String = "/storage/emulated/0/test1550554714085.mp4"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,6 +30,35 @@ class PlayerActivity : AppCompatActivity(), SurfacePlayerview.PreviewLifeListene
 
         btn = findViewById(R.id.playerbtn)
         btn?.setOnClickListener {
+            val metadataRetriever = MediaMetadataRetriever()
+            metadataRetriever.setDataSource(moivePath)
+            val widthString = metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
+            if (!TextUtils.isEmpty(widthString)) {
+                val width = Integer.valueOf(widthString)
+                Log.e("width", width.toString())
+            }
+            val heightString = metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
+            if (!TextUtils.isEmpty(heightString)) {
+                val height = Integer.valueOf(heightString)
+                Log.e("height", height.toString())
+            }
+            val durationString = metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+            if (!TextUtils.isEmpty(durationString)) {
+                val duration = java.lang.Long.valueOf(durationString).toInt()
+                Log.e("duration", duration.toString())
+            }
+            val bitrateString = metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_BITRATE)
+            if (!TextUtils.isEmpty(bitrateString)) {
+                val bitrate = Integer.valueOf(bitrateString)
+                Log.e("bitrate", bitrate.toString())
+            }
+            val degreeStr = metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION)
+            if (!TextUtils.isEmpty(degreeStr)) {
+                val degree = Integer.valueOf(degreeStr)
+                Log.e("degree", degree.toString())
+            }
+            metadataRetriever.release()
+
             moviePlayer?.startPlayer()
         }
     }

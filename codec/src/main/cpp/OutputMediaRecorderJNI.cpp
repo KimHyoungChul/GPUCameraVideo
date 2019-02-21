@@ -16,14 +16,16 @@ jlong Java_com_example_codeclibrary_MovieRecorder_nativeRecorderInit(JNIEnv * en
                                                                      jint height,
                                                                      jlong bitRate,
                                                                      jint outputOrientation,
-                                                                     jint mediacodecColorFormat){
+                                                                     jint mediacodecColorFormat,
+                                                                     jint bitRateMode){
 
     EncoderConfig config;
-    config.outputPath = env->GetStringUTFChars(savePath, NULL);
+    config.outputPath = env->GetStringUTFChars(savePath, nullptr);
     config.setOutputSize(Size(width, height));
     config.videoBitRate = (unsigned long) bitRate;
     config.outputOrientation = outputOrientation;
     config.colorYUVFormat = mediacodecColorFormat;
+    config.bitRateMode = bitRateMode;
 
     jobject object = env->NewGlobalRef(obj);
 

@@ -54,7 +54,7 @@ namespace GCVBase {
         MediaBuffer<uint8_t *> * frameAudioBuffer = NULL;
         MediaBuffer<uint8_t *> * frameVideoBuffer = NULL;
 
-        int64_t renderStart = -1;    //开始渲染时间，用来控制播放速率
+        int64_t renderStartTime = -1;    //开始渲染时间，用来控制播放速率
         bool mIsSurfacePlayer = false; // 是否使用surface直接作为输出（不用gl合成）
         bool mIsFinished = false;
         bool sawInput = false;  //输入流是否结束

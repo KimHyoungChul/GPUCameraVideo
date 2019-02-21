@@ -23,6 +23,10 @@ GCVBase::MediaEncoder::MediaEncoder(const GCVBase::EncoderConfig &config) {
     initAudioCodec();
 }
 
+GCVBase::MediaEncoder::~MediaEncoder() {
+
+}
+
 /****************************************** Encoder 类生命周期函数 *******************************************/
 
 void GCVBase::MediaEncoder::startEncoder(std::function<void()> startHandler) {
@@ -45,7 +49,7 @@ void GCVBase::MediaEncoder::pauseEncoder(std::function<void()> pauseHandler) {
 void GCVBase::MediaEncoder::cancelEncoder(std::function<void()> cancelHandler) {
     if (!mStop) {
         mStop = true;
-        finishEncoder(NULL);
+        finishEncoder(nullptr);
 
         if (cancelHandler) {
             cancelHandler();
@@ -88,8 +92,8 @@ void GCVBase::MediaEncoder::initVideoCodec() {
     AMediaFormat_setInt32(videoEncoderFormat, AMEDIAFORMAT_KEY_COLOR_FORMAT, mEncoderConfig.colorYUVFormat);
     AMediaFormat_setInt32(videoEncoderFormat, AMEDIAFORMAT_KEY_WIDTH, (int32_t) mEncoderConfig.outputSize.width);
     AMediaFormat_setInt32(videoEncoderFormat, AMEDIAFORMAT_KEY_HEIGHT, (int32_t) mEncoderConfig.outputSize.height);
-    AMediaFormat_setInt32(videoEncoderFormat, AMEDIAFORMAT_KEY_I_FRAME_INTERVAL, 10);
-    AMediaFormat_setInt32(videoEncoderFormat, "bitrate-mode", 0);
+    AMediaFormat_setInt32(videoEncoderFormat, AMEDIAFORMAT_KEY_I_FRAME_INTERVAL, 0);
+    AMediaFormat_setInt32(videoEncoderFormat, "bitrate-mode", 0); //默认比特率模式为BITRATE_MODE_CQ: 表示完全不控制码率，尽最大可能保证图像质量
 
     std::string videoMimeTypes[] = {"video/avc"};
     int count = sizeof(videoMimeTypes) / sizeof(const std::string);
@@ -103,9 +107,9 @@ void GCVBase::MediaEncoder::initVideoCodec() {
         }
     }
 
-    int ret = AMediaCodec_configure(mVideoMediaCodec, videoEncoderFormat, NULL, NULL,
-                                    AMEDIACODEC_CONFIGURE_FLAG_ENCODE); //最后一个参数表示这是个编码器,如果是解码器的话直接传个0就行了
-    if (ret != AMEDIA_OK) {
+    int ret = AMediaCodec_configure(mVideoMediaCodec, videoEncoderFormat, NULL, NULL, AMEDIACODEC_CONFIGURE_FLAG_ENCODE); //最后一个参数表示这是个编码器,如果是解码器的话直接传个0就行了
+
+    if (ret != AMEDIA_OK) { //当 BITRATE_MODE_CQ为不支持的比特率模式时，重新用上层传下来的bitRateMode来配置，上层是经过 MediaCodecInfo.CodecCapabilities 查询之后选取的
         AMediaFormat_setInt32(videoEncoderFormat, "bitrate-mode", mEncoderConfig.bitRateMode);
         ret = AMediaCodec_configure(mVideoMediaCodec, videoEncoderFormat, NULL, NULL, AMEDIACODEC_CONFIGURE_FLAG_ENCODE);
     }

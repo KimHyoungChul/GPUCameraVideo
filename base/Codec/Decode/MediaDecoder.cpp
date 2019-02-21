@@ -122,6 +122,12 @@ bool GCVBase::MediaDecoder::initVideoCodec(ANativeWindow * nativeWindow) {
 
             AMediaExtractor_selectTrack(videoEx, i);
             mVideoDecodeCodec = AMediaCodec_createDecoderByType(mime); //创建视频解码器
+
+            int32_t videoMaxInputSize, videoDuration;
+            AMediaFormat_getInt32(vedioformat, AMEDIAFORMAT_KEY_MAX_INPUT_SIZE, &videoMaxInputSize); // 就是 AMediaCodec_getInputBuffer 中的 bufferSize
+            AMediaFormat_getInt32(vedioformat, AMEDIAFORMAT_KEY_DURATION, &videoDuration);
+            __android_log_print(ANDROID_LOG_DEBUG, "AMediaExtractor_getVideoTrack", "videoMaxInputSize is: %i videoDuration is: %i", videoMaxInputSize, videoDuration);
+
             if(nativeWindow){
                 mIsSurfacePlayer = true;
                 AMediaCodec_configure(mVideoDecodeCodec, vedioformat, nativeWindow, NULL, 0);
@@ -153,6 +159,12 @@ bool GCVBase::MediaDecoder::initAudioCodec() {
             AMediaExtractor_selectTrack(audioEx, i);
 
             mAudioDecodeCodec = AMediaCodec_createDecoderByType(mime); //创建音频解码器
+
+            int32_t audioMaxInputSize, audioDuration;
+            AMediaFormat_getInt32(audioformat, AMEDIAFORMAT_KEY_MAX_INPUT_SIZE, &audioMaxInputSize);
+            AMediaFormat_getInt32(audioformat, AMEDIAFORMAT_KEY_DURATION, &audioDuration);
+            __android_log_print(ANDROID_LOG_DEBUG, "AMediaExtractor_getVideoTrack", "videoMaxInputSize is: %i videoDuration is: %i", audioMaxInputSize, audioDuration);
+
             AMediaCodec_configure(mAudioDecodeCodec, audioformat, NULL, NULL, 0);
             AMediaCodec_start(mAudioDecodeCodec);   //启动解码器
         }
@@ -199,8 +211,14 @@ GCVBase::MediaBuffer<uint8_t *> *GCVBase::MediaDecoder::getCodecFrameVideoBuffer
                 sawInput = true;
             }
 
-            auto presentationTimeUs = AMediaExtractor_getSampleTime(videoEx);
-            AMediaCodec_queueInputBuffer(mVideoDecodeCodec, bufferIndex, 0, samplesize, presentationTimeUs, sawInput ? AMEDIACODEC_BUFFER_FLAG_END_OF_STREAM : 0);
+            /**
+             * AMediaExtractor_getSampleTime 以微妙为单位返回当前采样的 pts(显示时间戳)
+             */
+            auto presentationTimeUs = AMediaExtractor_getSampleTime(videoEx) * 0.5;
+            /**
+             * 必须在 samplesize < 0 也就是解码结束时，传入AMEDIACODEC_BUFFER_FLAG_END_OF_STREAM这个标志位，下面才好判断是否结束
+             */
+            AMediaCodec_queueInputBuffer(mVideoDecodeCodec, bufferIndex, 0, samplesize, presentationTimeUs , sawInput ? AMEDIACODEC_BUFFER_FLAG_END_OF_STREAM : 0);
             AMediaExtractor_advance(videoEx);
         }
     }
@@ -217,42 +235,62 @@ GCVBase::MediaBuffer<uint8_t *> *GCVBase::MediaDecoder::getCodecFrameVideoBuffer
                 sawOutput = true;
             }
 
-            int64_t presentationNano = info.presentationTimeUs * 1000;
-            if (renderStart < 0) {
-                renderStart = (int64_t)currentTimeOfNanoseconds() - presentationNano;
+            int64_t presentationNano = info.presentationTimeUs * 1000; // presentationTimeUs就是应当播放的时间戳，用来啊控制播放线程
+
+            if (renderStartTime < 0) { //renderStart初始化的时候，也就是第一帧解码出的时候，presentationNano = 0
+                renderStartTime = (int64_t)currentTimeOfNanoseconds() - presentationNano; //也就是说renderStart代表第一帧解码出来时的时间
+                __android_log_print(ANDROID_LOG_DEBUG, "AMediaCodec_getOutputBuffer", "renderStart time === %llu ", renderStartTime);
             }
-            int64_t delay = (renderStart + presentationNano) - (int64_t)currentTimeOfNanoseconds();
-            if (delay > 0) {
-                //延时操作，如果缓冲区里的可展示时间 > 当前视频播放的进度，就休眠一下
-                usleep(delay / 1000);
+
+            /**
+             * 这里的 usleep 逻辑实际上就是以当前系统时间为标准进行同步显示，由于我们一般录制这种视频时是全I帧录制，因此DTS与PTS是相同的，
+             * 如果不加以限制，则info.presentationTimeUs没有任何指导意义，那实际显示的时间就是Mediaplayer类中的while()循环执行的速度，
+             * 每一个循环调用过来，直接进行解码渲染上屏，这个速度也是加倍速时最快的速度了。
+             *
+             * 现在我们根据系统 AMediaExtractor_getSampleTime 得出的 pts 进行同步，在正常速度下播放（也就是录像时的速度），usleep()
+             * 中的时间是正值，说明需要解码出来不能立即播放（不然就不是录像时的速度了）。
+             *
+             * 如果要慢速播放，只需要给 AMediaExtractor_getSampleTime 得出的 pts 加倍即可，这样就 usleep()中等待的时间就更长了，
+             * 也就是每一帧的时间变长（倍速过长会导致播放便的卡顿，类似ppt）; 如果要倍速播放，则给 pts变小（x0.5等），这样usleep()中
+             * 等待的时间就变短了，播放速度就加快了，但这个是有极限的，如果 usleep()中的 delay是负值，那就是最快了，此时的速度就是前面
+             * 说的Mediaplayer类中的while()循环执行的速度，除非解码能够更快一点。
+             *
+             * 如有音频轨道，按照一般以音频轨道时间为基准做音频同步的原则，这里就需要跟音频的pts作比较了，而不是当前系统时间，都是一个道理。
+             *
+             * 因此 renderStartTime + presentationNano 代表显示时间戳（pts），这个时间戳用来告诉播放器该在什么时候显示这一帧的数据。
+             * 如果 pts > currentTimeOfNanoseconds(), 也就是当前帧应当展示的时间超前于系统当前时间，则等一阵再展示
+             * 如果 pts < currentTimeOfNanoseconds(), 此时当前帧应当展示的时间落后于系统时间，则应当立即展示该帧
+             */
+            int64_t delay = (renderStartTime + presentationNano) - (int64_t)currentTimeOfNanoseconds();
+            if (delay > 0) { //延时操作，如果缓冲区里的可展示时间 > 当前视频播放的进度，就休眠一下
+                useconds_t time = static_cast<useconds_t>(delay / 1000);
+                __android_log_print(ANDROID_LOG_DEBUG, "AMediaCodec_dequeueOutputBuffer", "usleep time is %u", time);
+                usleep(time);
+            } else{
+                __android_log_print(ANDROID_LOG_ERROR, "AMediaCodec_dequeueOutputBuffer", "usleep Fall Behind currentTime %lli", delay / 1000);
             }
 
             if(!mIsSurfacePlayer) {
-
                 /**
                  * 用AMediaCodec_getOutputFormat接口得到Format对象，并且不能设置surface数据的，此时才能得到正确的颜色空间等数据，不过这样的话这个接口设计的也是很匪夷所思
                  */
                 float rotation;
-                int framerate = 30, bitrate = 500000;
-                int32_t colorFormat, width, height, stride;
+                int32_t colorFormat, width, height, stride, framerate, bitrate;
 
                 auto format = AMediaCodec_getOutputFormat(mVideoDecodeCodec);
                 AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_COLOR_FORMAT, &colorFormat);
-                AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_BIT_RATE, bitrate);
-                AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_FRAME_RATE, framerate);
-                AMediaFormat_setInt32(format, AMEDIAFORMAT_KEY_I_FRAME_INTERVAL, framerate);
+                AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_BIT_RATE, &bitrate);
+                AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_FRAME_RATE, &framerate);
+                AMediaFormat_getInt32(format, AMEDIAFORMAT_KEY_I_FRAME_INTERVAL, &framerate);
                 AMediaFormat_getFloat(format, "rotation", &rotation);
                 AMediaFormat_getInt32(format, "width", &width);
                 AMediaFormat_getInt32(format, "height", &height);
                 AMediaFormat_getInt32(format, "stride", &stride);
 
-                __android_log_print(ANDROID_LOG_DEBUG, "AMediaCodec_dequeueOutputBuffer",
-                                    "color Format = %d width = %d height = %d stride = %d rotation = %d framerate = %d bitrate = %d",
-                                    colorFormat, width, height, stride, (int) rotation, framerate,
-                                    bitrate);
+                __android_log_print(ANDROID_LOG_DEBUG, "AMediaCodec_dequeueOutputBuffer", "color Format = %d width = %d height = %d stride = %d rotation = %d framerate = %d bitrate = %d",
+                                    colorFormat, width, height, stride, (int) rotation, framerate, bitrate);
 
-                __android_log_print(ANDROID_LOG_DEBUG, "AMediaCodec_dequeueOutputBuffer",
-                                    "AMediaFormat_toString: %s", AMediaFormat_toString(format));
+                __android_log_print(ANDROID_LOG_DEBUG, "AMediaCodec_dequeueOutputBuffer", "AMediaFormat_toString: %s", AMediaFormat_toString(format));
 
                 AMediaFormat_delete(format);
 
