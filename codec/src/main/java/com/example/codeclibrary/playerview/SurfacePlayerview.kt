@@ -33,11 +33,17 @@ class SurfacePlayerview: SurfaceView, SurfaceHolder.Callback, GCVOutput {
             nativeOutputSurfaceAddress = nativeSurfaceWindowInit(holder.surface) //初始化native层egl的surface表面
         }
 
-        lifeListener?.onPreviewReady()
+        if (holder != null) {
+            lifeListener?.onPreviewReady(holder)
+        }
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder?) {
+        nativeSurfaceWindowDestroyed(nativeOutputSurfaceAddress)
 
+        if (holder != null) {
+            lifeListener?.onPreviewDestroyed(holder)
+        }
     }
 
     fun addPreviewLifeListener(previewLife: PreviewLifeListener){
@@ -55,8 +61,11 @@ class SurfacePlayerview: SurfaceView, SurfaceHolder.Callback, GCVOutput {
 
     private external fun nativeSurfaceWindowInit(surface: Any): Long
 
+    private external fun nativeSurfaceWindowDestroyed(nativeOutputSurfaceAddress: Long)
+
     interface PreviewLifeListener{
-        fun onPreviewReady()
+        fun onPreviewReady(holder: SurfaceHolder)
+        fun onPreviewDestroyed(holder: SurfaceHolder)
     }
 
 }

@@ -10,7 +10,7 @@ GCVBase::MediaPlayer::MediaPlayer(std::string readPath, ANativeWindow * nativeWi
 }
 
 GCVBase::MediaPlayer::~MediaPlayer() {
-
+    delete mediaDecoder;
 }
 
 void GCVBase::MediaPlayer::startPlayer(const std::function<void ()> &handler) {
@@ -65,9 +65,6 @@ void GCVBase::MediaPlayer::readNextVideoFrame() {
 
             rotationPlayer = Rotation(rotationMode, FacingMode::FacingBack);
             newFrameReadyAtTime(rotationPlayer, resultFbo, videoBuffer->time);
-
-            delete resultFbo;
-            delete videoBuffer;
         }
     });
 }
@@ -81,14 +78,12 @@ void GCVBase::MediaPlayer::readNextAudioFrame() {
 
 void GCVBase::MediaPlayer::newFrameReadyAtTime(const Rotation &mRotation, FrameBuffer *resultFbo, const MediaTime &time) {
 
-    runSyncContextLooper(Context::getShareContext()->getContextLooper(), [=] {
-        for(auto i = mTargets.begin(); i < mTargets.end(); i++){
-            auto currentTarget =  * i;
-            currentTarget->_setOutputRotation(mRotation);
-            currentTarget->_setOutputFramebuffer(resultFbo);
-            currentTarget->_newFrameReadyAtTime(time);
-        }
-    });
+    for(auto i = mTargets.begin(); i < mTargets.end(); i++){
+        auto currentTarget =  * i;
+        currentTarget->_setOutputRotation(mRotation);
+        currentTarget->_setOutputFramebuffer(resultFbo);
+        currentTarget->_newFrameReadyAtTime(time);
+    }
 }
 
 void GCVBase::MediaPlayer::setFilePath(std::string readPath) {

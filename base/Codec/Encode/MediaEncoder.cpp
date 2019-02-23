@@ -24,7 +24,7 @@ GCVBase::MediaEncoder::MediaEncoder(const GCVBase::EncoderConfig &config) {
 }
 
 GCVBase::MediaEncoder::~MediaEncoder() {
-
+    delete encoderLooper;
 }
 
 /****************************************** Encoder 类生命周期函数 *******************************************/
@@ -155,7 +155,7 @@ void GCVBase::MediaEncoder::newFrameEncodeVideo(GCVBase::MediaBuffer<uint8_t *> 
         return;
     }
 
-    auto inputBuffer = AMediaCodec_dequeueInputBuffer(mVideoMediaCodec, 0);
+    auto inputBuffer = AMediaCodec_dequeueInputBuffer(mVideoMediaCodec, 2000);
     if (inputBuffer > AMEDIACODEC_INFO_TRY_AGAIN_LATER) {
         size_t outputSize = 0; //inputBuffer的长度
         uint8_t *input = AMediaCodec_getInputBuffer(mVideoMediaCodec, (size_t) inputBuffer, &outputSize); //这玩意是送进编码器的空buffer，需要我们手动填充数据
@@ -286,8 +286,8 @@ void GCVBase::MediaEncoder::recordCodecBuffer(AMediaCodecBufferInfo *bufferInfo,
 
         GCVBase::runSyncContextLooper(encoderLooper, [=]{
             if (bufferInfo->size > 0) {
-                bufferInfo->presentationTimeUs = (uint64_t)getCurrentTime();
-                media_status_t status = AMediaMuxer_writeSampleData(mMuxer, trackIndex, output, bufferInfo);
+//                bufferInfo->presentationTimeUs = (uint64_t)getCurrentTime();
+                media_status_t status = AMediaMuxer_writeSampleData(mMuxer, trackIndex, output, bufferInfo); //这里直接就把 outputbuffer传进去了，毕竟是同步写入文件，写完后才会释放buffer
                 if (status != AMEDIA_OK) {
                     __android_log_print(ANDROID_LOG_ERROR, "writeSampleData", "write sample data failed !!!type:%s", trackIndex == 0 ? "audio" : "video");
                 }
@@ -351,12 +351,12 @@ void GCVBase::MediaEncoder::stopMediaMuxer(AMediaCodec *codec) {
         return;
     }
 
-    nowcodec == "VideoMediaCodec" ? mVideoMediaCodec = NULL : mAudioMediaCodec = NULL;
+    nowcodec == "VideoMediaCodec" ? mVideoMediaCodec = nullptr : mAudioMediaCodec = nullptr;
     if (mVideoMediaCodec || mAudioMediaCodec) {
         return;
     }
 
-    if (mMuxer != NULL) {
+    if (mMuxer != nullptr) {
         int res = AMediaMuxer_stop(mMuxer);
         if (res != AMEDIA_OK) {
             __android_log_print(ANDROID_LOG_ERROR, "AMediaMuxer_stop", "AMediaMuxer_stop failed === %d", res);
@@ -366,13 +366,13 @@ void GCVBase::MediaEncoder::stopMediaMuxer(AMediaCodec *codec) {
         if (res != AMEDIA_OK) {
             __android_log_print(ANDROID_LOG_ERROR, "AMediaMuxer_delet", "AMediaMuxer_delet failed === %d", res);
         }
-        mMuxer = NULL;
+        mMuxer = nullptr;
     }
 
-    if (saveFile != NULL) {
+    if (saveFile != nullptr) {
         fflush(saveFile);
         fclose(saveFile);
-        saveFile = NULL;
+        saveFile = nullptr;
     }
 
     mIsRunning = false;

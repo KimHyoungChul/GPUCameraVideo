@@ -41,6 +41,8 @@ namespace GCVBase {
 
         std::string mFilePath;
 
+        uint8_t * outputBuffer;
+
         ANativeWindow *mNativeWindow;
 
         AMediaExtractor *videoEx;

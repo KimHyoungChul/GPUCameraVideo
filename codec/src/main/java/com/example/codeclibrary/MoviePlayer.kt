@@ -28,6 +28,14 @@ class MoviePlayer(readPath: String? = null, surface: Surface? = null) : GCVInput
         nativeCancelPalyer(inputObjectAdress)
     }
 
+    fun setPlayerSurface(surface: Surface){
+        nativeSetPlayerSurface(inputObjectAdress, surface)
+    }
+
+    fun surfaceDestroyed(){
+        nativeSurfaceDestroyed(inputObjectAdress)
+    }
+
 
     private external fun nativePlayerInit(readPath: String?, surface: Surface?): Long
 
@@ -38,5 +46,9 @@ class MoviePlayer(readPath: String? = null, surface: Surface? = null) : GCVInput
     private external fun nativeCancelPalyer(inputObjectAdress: Long)
 
     private external fun nativeSetFilePath(inputObjectAdress: Long, readPath: String)
+
+    private external fun nativeSetPlayerSurface(inputObjectAdress: Long, surface: Surface)
+
+    private external fun nativeSurfaceDestroyed(inputObjectAdress: Long)
 
 }

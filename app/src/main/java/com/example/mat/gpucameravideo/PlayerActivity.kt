@@ -8,6 +8,7 @@ import com.example.codeclibrary.playerview.SurfacePlayerview
 import android.text.TextUtils
 import android.media.MediaMetadataRetriever
 import android.util.Log
+import android.view.SurfaceHolder
 
 
 /**
@@ -20,7 +21,7 @@ class PlayerActivity : AppCompatActivity(), SurfacePlayerview.PreviewLifeListene
     private var moviePlayer: MoviePlayer? = null
     private var btn: Button? = null
 
-    private var moivePath : String = "/storage/emulated/0/test1550554714085.mp4"
+    private var moivePath : String = "/storage/emulated/0/test1550826781725.mp4"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,9 +64,14 @@ class PlayerActivity : AppCompatActivity(), SurfacePlayerview.PreviewLifeListene
         }
     }
 
-    override fun onPreviewReady() {
+
+    override fun onPreviewReady(holder: SurfaceHolder) {
         moviePlayer = MoviePlayer(moivePath)
         moviePlayer?.addTarget(playerView!!)
+    }
+
+    override fun onPreviewDestroyed(holder: SurfaceHolder) {
+        moviePlayer?.surfaceDestroyed()
     }
 
 

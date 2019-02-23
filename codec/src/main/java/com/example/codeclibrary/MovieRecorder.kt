@@ -85,7 +85,7 @@ class MovieRecorder(savepath: String, width: Int, height: Int, bitRate: Long, ou
         nativeStartRecorder(movieRecorderAddress)
     }
 
-    fun FinishRecorder(){
+    fun finishRecorder(){
         nativeFinishRecorder(movieRecorderAddress)
     }
 
@@ -95,6 +95,10 @@ class MovieRecorder(savepath: String, width: Int, height: Int, bitRate: Long, ou
 
     fun cancelRecording(){
         nativecancelRecording(movieRecorderAddress)
+    }
+
+    fun onSurfaceDestory(){
+        nativeSurfaceDestory(movieRecorderAddress)
     }
 
     /**
@@ -107,5 +111,7 @@ class MovieRecorder(savepath: String, width: Int, height: Int, bitRate: Long, ou
     private external fun nativeFinishRecorder(movieRecorderAddress: Long)
     private external fun nativePauseRecorder(movieRecorderAddress: Long)
     private external fun nativecancelRecording(movieWriterAddress: Long)
+
+    private external fun nativeSurfaceDestory(movieWriterAddress: Long)
 
 }

@@ -50,7 +50,7 @@ GCVBase::Filter::Filter(const std::string &vertexShader, const std::string &frag
 
 
 GCVBase::Filter::~Filter() {
-
+    delete mFilterProgram;
 }
 
 void GCVBase::Filter::newFrameReadyAtTime() {
@@ -61,8 +61,6 @@ void GCVBase::Filter::newFrameReadyAtTime() {
     runSyncContextLooper(Context::getShareContext()->getContextLooper(), [=]{
         Context::makeShareContextAsCurrent();
         mFilterProgram->useProgram();
-
-//        glViewport(0, 0, mFilterWidth, mFilterHeight);  //TODO 这个 glViewport 到底有没有用？
 
         glEnableVertexAttribArray(aPositionAttribute);
         glEnableVertexAttribArray(aTexCoordAttribute);

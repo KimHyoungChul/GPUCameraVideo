@@ -15,16 +15,17 @@ GCVBase::FilterGroup::~FilterGroup() {
 
 void GCVBase::FilterGroup::_newFrameReadyAtTime(const GCVBase::MediaTime &time) {
 
-    if(mOutputFilterGroupFramebuffer == NULL){
+    if(mOutputFilterGroupFramebuffer == nullptr){
         return;
     }
 
     //逐个绘制Filter到 mOutputFilterGroupFramebuffer中的Texture上
-    // TODO: 待优化，没必要每帧都绘制一遍，第一次绘制完保存下，之后remove改变的时候更新一遍
-    for(auto i = mFilterGroup.begin(); i< mFilterGroup.end(); i++) {
-        auto currentFilter = * i;
-        currentFilter->setPreviousFramebuffer(mOutputFilterGroupFramebuffer);
-        currentFilter->newFrameReadyAtTime();
+    if(!mFilterGroup.empty()) { // TODO: 待优化，没必要每帧都绘制一遍，第一次绘制完保存下，之后remove或者add的时候更新一遍
+        for (auto i = mFilterGroup.begin(); i < mFilterGroup.end(); i++) {
+            auto currentFilter = *i;
+            currentFilter->setPreviousFramebuffer(mOutputFilterGroupFramebuffer);
+            currentFilter->newFrameReadyAtTime();
+        }
     }
 
     for(auto i = mTargets.begin(); i < mTargets.end(); i++){

@@ -43,7 +43,8 @@ GCVBase::DisplayView::DisplayView(int width, int height) {
 }
 
 GCVBase::DisplayView::~DisplayView() {
-
+    delete mDisplayProgram;
+    delete mOutputDisplayFramebuffer; //作为最终的展示窗口，DisplayView有义务销毁外部绘制链传入的fbo对象
 }
 
 void GCVBase::DisplayView::_newFrameReadyAtTime(const MediaTime &time) {

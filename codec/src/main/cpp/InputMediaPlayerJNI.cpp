@@ -87,4 +87,10 @@ void Java_com_example_codeclibrary_MoviePlayer_nativeSetPlayerSurface(JNIEnv * e
     mediaPlayer->setNativeSurface(nativeWindow);
 }
 
+
+void Java_com_example_codeclibrary_MoviePlayer_nativeSurfaceDestroyed(JNIEnv * env, jobject obj, jlong nativePlayerAddress){
+    MediaPlayer * mediaPlayer = (MediaPlayer * )nativePlayerAddress;
+    delete mediaPlayer;
+}
+
 }

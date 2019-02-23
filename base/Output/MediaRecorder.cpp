@@ -30,8 +30,8 @@ GCVBase::MediaRecorder::MediaRecorder(const GCVBase::EncoderConfig &config, JNIE
     mediaEncoder = new MediaEncoder(config);
     mediaBuffer =  new MediaBuffer<GLubyte *>();
 
-    const EglCore * shareEglInstance = (const EglCore *)Context::getShareContext()->getEglInstance();
-    EglCore * recordEglInstance = new EglCore((const void *)shareEglInstance->getEGLContext(), NULL, 1, 1);
+    EglCore * shareEglInstance = Context::getShareContext()->getEglInstance();
+    EglCore * recordEglInstance = new EglCore(shareEglInstance->getEGLContext(), nullptr, 1, 1);
 
     /*
      * 记录需要另起一个线程，在mainLooper中进行Camera预览界面的渲染绘制，在recordLooper中进行离屏渲染并保存，
@@ -59,7 +59,10 @@ GCVBase::MediaRecorder::MediaRecorder(const GCVBase::EncoderConfig &config, JNIE
 }
 
 GCVBase::MediaRecorder::~MediaRecorder() {
-    delete(mediaBuffer);
+    delete mediaEncoder;
+    delete mediaBuffer;
+    delete mRecordProgram;
+    delete recordContext;
 }
 
 void GCVBase::MediaRecorder::startRecording(const std::function<void ()> &handler) {
@@ -67,13 +70,13 @@ void GCVBase::MediaRecorder::startRecording(const std::function<void ()> &handle
     mStartCallback = handler;
 
     runSyncContextLooper(recordContext->getContextLooper(), [=]{
-        unsigned long size = (unsigned long) (mVideoSize.width * mVideoSize.height * 4);
-        unsigned long alignSize = alignment_up((size), MemoryAligned);
+        auto size = (unsigned long) (mVideoSize.width * mVideoSize.height * 4);
+        auto alignSize = alignment_up((size), MemoryAligned);
         mRGBAData = new GLubyte[alignSize];
 
         mediaEncoder->startEncoder(mStartCallback);
         mStartTime = MediaTime::Init();
-        mStartCallback = NULL;
+        mStartCallback = nullptr;
     });
 }
 
@@ -83,7 +86,7 @@ void GCVBase::MediaRecorder::pauseRecording(const std::function<void ()> &handle
 
     runSyncContextLooper(recordContext->getContextLooper(), [=]{
         mediaEncoder->pauseEncoder(mPauseCallback);
-        mPauseCallback = NULL;
+        mPauseCallback = nullptr;
     });
 }
 
@@ -96,7 +99,7 @@ void GCVBase::MediaRecorder::finishRecording(const std::function<void ()> &handl
         if (!mEncoderIsFinished) {
             mEncoderIsFinished = true;
             mediaEncoder->finishEncoder(mFinishCallback);
-            mFinishCallback = NULL;
+            mFinishCallback = nullptr;
         }
     });
 }
@@ -108,7 +111,7 @@ void GCVBase::MediaRecorder::cancelRecording(const std::function<void ()> &handl
 
     runSyncContextLooper(recordContext->getContextLooper(), [=]{
         mediaEncoder->cancelEncoder(mCancelCallback);
-        mCancelCallback = NULL;
+        mCancelCallback = nullptr;
     });
 }
 
@@ -213,7 +216,7 @@ void GCVBase::MediaRecorder::creatRecorderFramebuffer() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (int)mVideoSize.width, (int)mVideoSize.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (int)mVideoSize.width, (int)mVideoSize.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mRecorderTexture, 0);
 
     GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);

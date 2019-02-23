@@ -24,4 +24,9 @@ jlong Java_com_example_codeclibrary_playerview_SurfacePlayerview_nativeSurfaceWi
     return (jlong)displayView;
 }
 
+void Java_com_example_codeclibrary_playerview_SurfacePlayerview_nativeSurfaceWindowDestroyed(JNIEnv *env, jobject obj, jlong nativeOutputSurfaceAddress){
+    auto * displayView = (DisplayView * )nativeOutputSurfaceAddress;
+    delete displayView;
+}
+
 }

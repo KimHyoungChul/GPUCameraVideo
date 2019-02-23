@@ -19,18 +19,18 @@ namespace GCVBase {
         bool mStop = true;
         bool mIsYUV420SP = false;
 
-        Looper * encoderLooper = NULL;
+        Looper * encoderLooper = nullptr;
         EncoderConfig mEncoderConfig;
 
         uint64_t startTime = 0;
         uint64_t writeSampleDataTime = 0;
 
-        AMediaCodec *mVideoMediaCodec = NULL;
-        AMediaCodec *mAudioMediaCodec = NULL;
-        AMediaMuxer *mMuxer = NULL;
+        AMediaCodec *mVideoMediaCodec = nullptr;
+        AMediaCodec *mAudioMediaCodec = nullptr;
+        AMediaMuxer *mMuxer = nullptr;
         ssize_t mVideoTrackIndex = -1;
         ssize_t mAudioTrackIndex = -1;
-        FILE * saveFile = NULL;
+        FILE * saveFile = nullptr;
 
         bool mVideoIsWritten = false; //必须先让视频帧先写入，不然开始会黑屏的
         bool mIsRunning = false;
@@ -46,10 +46,10 @@ namespace GCVBase {
         MediaEncoder(const GCVBase::EncoderConfig &config);
         ~MediaEncoder();
 
-        void startEncoder(std::function<void(void)> startHandler = NULL);
-        void pauseEncoder(std::function<void(void)> pauseHandler = NULL);
-        void cancelEncoder(std::function<void(void)> cancelHandler = NULL);
-        void finishEncoder(std::function<void(void)> finishHandler = NULL);
+        void startEncoder(std::function<void(void)> startHandler = nullptr);
+        void pauseEncoder(std::function<void(void)> pauseHandler = nullptr);
+        void cancelEncoder(std::function<void(void)> cancelHandler = nullptr);
+        void finishEncoder(std::function<void(void)> finishHandler = nullptr);
 
         template <class T_> void newFrameReadyAtTime(MediaBuffer<T_> * mediaBuffer){
             if(mStop){

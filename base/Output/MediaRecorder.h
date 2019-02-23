@@ -26,28 +26,28 @@ namespace GCVBase {
         MediaTime mPreviousFrameTime = MediaTime::NegativeInfinity();
         MediaTime mPreviousAudioTime = MediaTime::NegativeInfinity();
 
-        GLubyte * mRGBAData = NULL;
+        GLubyte * mRGBAData = nullptr;
         GLuint mRecorderTexture = 0;
         GLuint mRecorderFramebuffer = 0;
 
-        MediaEncoder * mediaEncoder = NULL;
-        Context * recordContext = NULL;
-        GLProgram *mRecordProgram = NULL;
+        MediaEncoder * mediaEncoder = nullptr;
+        Context * recordContext = nullptr;
+        GLProgram *mRecordProgram = nullptr;
 
         bool mIsRecording = false;
         bool mCancelRecording = false;
         bool mEncoderIsFinished = false;
 
-        MediaBuffer<GLubyte *> *mediaBuffer  = NULL;
+        MediaBuffer<GLubyte *> *mediaBuffer  = nullptr;
 
         Rotation rotationMediaRecorder = Rotation::defaultRotation();
 
-        FrameBuffer *mFinalFilterFramebuffer = NULL; //滤镜链的最后一个滤镜持有的FrameBuffer
+        FrameBuffer *mFinalFilterFramebuffer = nullptr; //滤镜链的最后一个滤镜持有的FrameBuffer
 
-        std::function<void (void)> mStartCallback = NULL;
-        std::function<void (void)> mPauseCallback = NULL;
-        std::function<void (void)> mFinishCallback = NULL;
-        std::function<void (void)> mCancelCallback = NULL;
+        std::function<void (void)> mStartCallback = nullptr;
+        std::function<void (void)> mPauseCallback = nullptr;
+        std::function<void (void)> mFinishCallback = nullptr;
+        std::function<void (void)> mCancelCallback = nullptr;
 
         void renderRecorderFramebuffer(FrameBuffer *framebuffer);
         void creatRecorderFramebuffer();
@@ -56,7 +56,7 @@ namespace GCVBase {
 
 
     public:
-        jobject jmediaObj = NULL;
+        jobject jmediaObj = nullptr;
 
         MediaRecorder(const EncoderConfig &config, JNIEnv * env);
         ~MediaRecorder();
@@ -69,9 +69,9 @@ namespace GCVBase {
         void finishRecording(const std::function<void ()> &handler);
         void cancelRecording(const std::function<void ()> &handler);
 
-        virtual void _newFrameReadyAtTime(const MediaTime &time);
-        virtual void _setOutputRotation(const Rotation &rotation);
-        virtual void _setOutputFramebuffer(FrameBuffer *framebuffer);
+        void _newFrameReadyAtTime(const MediaTime &time) override;
+        void _setOutputRotation(const Rotation &rotation) override;
+        void _setOutputFramebuffer(FrameBuffer *framebuffer) override;
     };
 }
 
