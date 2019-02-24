@@ -16,19 +16,25 @@ namespace GCVBase {
 
     public:
 
-        YUVFrameBuffer();
+        YUVFrameBuffer(int mFrameWidth = 0,int mFrameHeight = 0);
         ~YUVFrameBuffer();
 
-        FrameBuffer * getyuv420Framebuffer(GLuint luma, GLuint cb, GLuint cr, const TextureOptions &options, const Size &size);
+        MediaBuffer<FrameBuffer *> * fboBuffer = nullptr;
+
+        FrameBuffer * getyuv420Framebuffer(GLuint luma, GLuint cb, GLuint cr);
 
         MediaBuffer<FrameBuffer *> * decodeYUVBuffer(MediaBuffer<uint8_t *> *videoBuffer);
 
     private:
 
+        int mFrameWidth = 0;
+        int mFrameHeight = 0;
+
         FrameBuffer *mTextureY = nullptr;
         FrameBuffer *mTextureCb = nullptr;
         FrameBuffer *mTextureCr = nullptr;
 
+        FrameBuffer *mYUVFramebuffer = nullptr;
 
         GLProgram *mYUVfboProgram;
 
@@ -46,6 +52,8 @@ namespace GCVBase {
         char *uBuffer;
         char *vBuffer;
         size_t uvBufferSize;   //uv大小是一致的
+
+        bool checkUpdateFrameBuffer(MediaBuffer<uint8_t *> *videoBuffer);
 
     };
 }

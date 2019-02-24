@@ -91,8 +91,8 @@ void GCVBase::Camera::genSurfaceTexture() {
         __android_log_print(ANDROID_LOG_ERROR, "genSurfaceTexture", "genSurfaceTexture Thread is %u", std::this_thread::get_id());
 
         if (!mEglInstance) {
-            const EglCore *sharedEglInstance = (const EglCore *)Context::getShareContext()->getEglInstance();
-            mEglInstance = new EglCore( (const void *)sharedEglInstance->getEGLContext(), NULL, 1, 1);
+            auto *sharedEglInstance = Context::getShareContext()->getEglInstance();
+            mEglInstance = new EglCore( (const void *)sharedEglInstance->getEGLContext(), nullptr, 1, 1);
             mEglInstance->makeAsCurrent();
 
             glGenTextures(1, &mOESTexture);
@@ -163,18 +163,18 @@ void GCVBase::Camera::surfaceTextureAvailable() {
         glDisableVertexAttribArray(aPositionAttribute);
         glDisableVertexAttribArray(aTexCoordAttribute);
 
-        MediaTime time = MediaTime((int64_t)currentTimeOfMilliseconds(), 60, TimeFlag_Init);
-        newFrameReadyAtTime(time);
+//        MediaTime time = MediaTime((int64_t)currentTimeOfMilliseconds(), 30, TimeFlag_Init);
+        newFrameReadyAtTime();
     });
 }
 
-void GCVBase::Camera::newFrameReadyAtTime(const MediaTime &time) {
+void GCVBase::Camera::newFrameReadyAtTime() {
     for(auto i = mTargets.begin(); i < mTargets.end(); i++){
         auto currentTarget =  * i;
         FilterGroup * filterGroup = (FilterGroup *) (jlong)currentTarget;
         filterGroup->_setOutputRotation(rotationCamera);
         filterGroup->_setOutputFramebuffer(mOutputFrameBuffer);
-        filterGroup->_newFrameReadyAtTime(time);
+        filterGroup->_newFrameReadyAtTime();
     }
 }
 

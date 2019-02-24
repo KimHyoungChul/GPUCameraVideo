@@ -2,6 +2,7 @@
 // Created by 刘轩 on 2019/2/5.
 //
 
+#include <android/log.h>
 #include "YUVFrameBuffer.h"
 
 using namespace GCVBase;
@@ -32,7 +33,12 @@ std::string yuvFrameBufferFragmentShader =
         "    gl_FragColor = vec4(rgb, 1);\n"
         "}\n";
 
-GCVBase::YUVFrameBuffer::YUVFrameBuffer() {
+GCVBase::YUVFrameBuffer::YUVFrameBuffer(int frameWidth, int frameHeight) {
+
+    mFrameWidth = frameWidth;
+    mFrameWidth = frameHeight;
+
+    fboBuffer = new MediaBuffer<FrameBuffer *>();
 
     runSyncContextLooper(Context::getShareContext()->getContextLooper(), [=] {
         mYUVfboProgram = new GLProgram(yuvFrameBufferVertexShader, yuvFrameBufferFragmentShader);
@@ -56,23 +62,73 @@ GCVBase::YUVFrameBuffer::YUVFrameBuffer() {
 }
 
 GCVBase::YUVFrameBuffer::~YUVFrameBuffer() {
+    delete fboBuffer;
+    delete mYUVfboProgram;
 
+    delete mTextureY;
+    delete mTextureCb;
+    delete mTextureCr;
+    delete mYUVFramebuffer;
+}
+
+/**
+ * 这个函数的作用主要是避免在频繁调用的函数中 new fbo 对象，这里需要用到四张fbo，非常占用内存
+ */
+bool YUVFrameBuffer::checkUpdateFrameBuffer(MediaBuffer<uint8_t *> *videoBuffer) {
+
+    int width = (int) (videoBuffer->metaData[WidthKey]);
+    int height = (int) (videoBuffer->metaData[HeightKey]);
+
+    if(mFrameWidth == width && mFrameHeight == height ){
+        return true;
+    }
+
+    /**
+     * 否则说明FrameSize发生了改变，需要重建Fbo对象
+     */
+
+    delete mTextureY;
+    delete mTextureCb;
+    delete mTextureCr;
+    delete mYUVFramebuffer;
+
+    mFrameWidth = width;
+    mFrameHeight = height;
+
+    TextureOptions options;
+    options.internalFormat = GL_LUMINANCE;
+    options.format = GL_LUMINANCE;
+
+    //Texture Y
+    Size size(width, height); //这个size对象占用的是栈空间,方法块执行完自动释放
+    mTextureY = new FrameBuffer(size, options, Context::getShareContext());
+
+    //Texture U
+    size =  Size(size.width / 2, size.height / 2);
+    mTextureCb = new FrameBuffer(size, options, Context::getShareContext());
+
+    //Texture V
+    mTextureCr = new FrameBuffer(size, options, Context::getShareContext());
+
+    //YUV最终合成的 rgb Buffer
+    mYUVFramebuffer = new FrameBuffer(size, TextureOptions(), Context::getShareContext()); // TODO 这个FrameBuffer对象也要重点关注！！！
+
+    return false;
 }
 
 
 MediaBuffer<FrameBuffer *> *YUVFrameBuffer::decodeYUVBuffer(MediaBuffer<uint8_t *> *videoBuffer) {
 
-    /*
-     * TODO 需要时刻关注这个 buffer对象，及时释放他占用的内存！！！
-     */
-    auto *fboBuffer  = new MediaBuffer<FrameBuffer *>();
+    int width = (int) (videoBuffer->metaData[WidthKey]);
+    int height = (int) (videoBuffer->metaData[HeightKey]);
+
+    if(!checkUpdateFrameBuffer(videoBuffer)){ //检查FrameSize是否发生变化
+        __android_log_print(ANDROID_LOG_DEBUG, "checkUpdateFrameBuffer", "yuvFrameBuffer size has changed width == %d height == %d", width, height);
+    }
 
     if(videoBuffer->mediaType == MediaType::Video){
 
-        int width = (int) (videoBuffer->metaData[WidthKey]);
-        int height = (int) (videoBuffer->metaData[HeightKey]);
         int frameSize = width * height;     //注意YUV信号是frameSize的3/2大小
-
         char *frame = (char *) videoBuffer->mediaData;
 
         yBufferSize = static_cast<size_t>(frameSize);
@@ -115,39 +171,24 @@ MediaBuffer<FrameBuffer *> *YUVFrameBuffer::decodeYUVBuffer(MediaBuffer<uint8_t 
                 return nullptr;
         }
 
-        TextureOptions options;
-        options.internalFormat = GL_LUMINANCE;
-        options.format = GL_LUMINANCE;
+        free(frame);
 
-        //Texture Y
-        Size size(width, height); //这个size对象占用的是栈空间,方法块执行完自动释放
-        mTextureY = new FrameBuffer(size, options, Context::getShareContext());
         glBindTexture(GL_TEXTURE_2D, mTextureY->texture());
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_LUMINANCE, GL_UNSIGNED_BYTE, yBuffer);
         free(yBuffer);
         yBuffer = nullptr;
 
-        //Texture U
-        size =  Size(size.width / 2, size.height / 2);
-        mTextureCb = new FrameBuffer(size, options, Context::getShareContext());
         glBindTexture(GL_TEXTURE_2D, mTextureCb->texture());
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width / 2, height / 2, GL_LUMINANCE, GL_UNSIGNED_BYTE, uBuffer);
         free(uBuffer);
         uBuffer = nullptr;
 
-        //Texture V
-        mTextureCr = new FrameBuffer(size, options, Context::getShareContext());
         glBindTexture(GL_TEXTURE_2D, mTextureCr->texture());
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width / 2, height / 2, GL_LUMINANCE, GL_UNSIGNED_BYTE, vBuffer);
         free(vBuffer);
         vBuffer = nullptr;
 
-        FrameBuffer *framebuffer = getyuv420Framebuffer(mTextureY->texture(), mTextureCb->texture(), mTextureCr->texture(), options, size);
-        fboBuffer->mediaData = framebuffer;
-
-        delete mTextureY;
-        delete mTextureCb;
-        delete mTextureCr;
+        fboBuffer->mediaData = getyuv420Framebuffer(mTextureY->texture(), mTextureCb->texture(), mTextureCr->texture());
     }
 
     if(!fboBuffer->mediaData){
@@ -157,16 +198,13 @@ MediaBuffer<FrameBuffer *> *YUVFrameBuffer::decodeYUVBuffer(MediaBuffer<uint8_t 
     return fboBuffer;
 }
 
-FrameBuffer *YUVFrameBuffer::getyuv420Framebuffer(GLuint luma, GLuint cb, GLuint cr, const TextureOptions &options, const GCVBase::Size &size) {
+FrameBuffer *YUVFrameBuffer::getyuv420Framebuffer(GLuint luma, GLuint cb, GLuint cr) {
 
-    FrameBuffer *framebuffer = nullptr;
     runSyncContextLooper(Context::getShareContext()->getContextLooper(), [&]{
 
         Context::makeShareContextAsCurrent();
         mYUVfboProgram -> useProgram();
 
-        Size framebufferSize = size;
-        framebuffer = new FrameBuffer(framebufferSize, TextureOptions(), Context::getShareContext()); // TODO 这个FrameBuffer对象也要重点关注！！！
 
         glEnableVertexAttribArray(mYUVPositionAttribute);
         glEnableVertexAttribArray(mYUVTexCoordAttribute);
@@ -212,16 +250,16 @@ FrameBuffer *YUVFrameBuffer::getyuv420Framebuffer(GLuint luma, GLuint cb, GLuint
 
         glUniformMatrix3fv(mYUVMatrixUniform, 1, GL_FALSE, colorConversionMatrix);
 
-        framebuffer->bindFramebuffer();
+        mYUVFramebuffer->bindFramebuffer();
 
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
-        framebuffer->unbindFramebuffer();
+        mYUVFramebuffer->unbindFramebuffer();
 
         glDisableVertexAttribArray(mYUVPositionAttribute);
         glDisableVertexAttribArray(mYUVTexCoordAttribute);
     });
 
-    return framebuffer;
+    return mYUVFramebuffer;
 }
 

@@ -2,9 +2,10 @@
 // Created by 刘轩 on 2018/12/24.
 //
 
+#include <android/log.h>
 #include "Context.h"
 
-GCVBase::Context * GCVBase::Context::mShareContext = NULL;
+GCVBase::Context * GCVBase::Context::mShareContext = nullptr;
 
 GCVBase::Context::Context(JNIEnv *env, std::string looperName) {
     mContextLooper = new Looper(looperName);
@@ -17,7 +18,7 @@ GCVBase::Context::Context(JNIEnv *env, std::string looperName) {
             /* JNIEnv指针仅在创建它的线程有效。如果我们需要在其他线程访问JVM，那么必须先调用AttachCurrentThread将
              * 当前线程与JVM进行关联，然后才能获得JNIEnv对象。当然，我们在必要时需要调用DetachCurrentThread来解除链接。
              */
-            if (mContextJavaVM->AttachCurrentThread(&mContextEnv, NULL) != 0) {
+            if (mContextJavaVM->AttachCurrentThread(&mContextEnv, nullptr) != 0) {
                 // TODO 报错 "Failed to attach";
             }
         } else if (result == JNI_OK) {

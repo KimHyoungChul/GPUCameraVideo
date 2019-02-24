@@ -27,10 +27,7 @@ jlong Java_com_example_codeclibrary_MovieRecorder_nativeRecorderInit(JNIEnv * en
     config.colorYUVFormat = mediacodecColorFormat;
     config.bitRateMode = bitRateMode;
 
-    jobject object = env->NewGlobalRef(obj);
-
-    MediaRecorder * mediaRecord = new MediaRecorder(config, env); // TODO 需要用智能指针优化
-    mediaRecord->jmediaObj = object;
+    auto * mediaRecord = new MediaRecorder(config, env);
 
     return (jlong)mediaRecord;
 }
@@ -40,7 +37,7 @@ void Java_com_example_codeclibrary_MovieRecorder_nativeStartRecorder(JNIEnv * en
         return;
     }
 
-    MediaRecorder * mediaRecord = (MediaRecorder*) mMediaRecoderAddress;
+    auto * mediaRecord = (MediaRecorder*) mMediaRecoderAddress;
     mediaRecord->startRecording([=]{
 
     });
@@ -51,7 +48,7 @@ void Java_com_example_codeclibrary_MovieRecorder_nativePauseRecorder(JNIEnv * en
         return;
     }
 
-    MediaRecorder * mediaRecord = (MediaRecorder*) mMediaRecoderAddress;
+    auto * mediaRecord = (MediaRecorder*) mMediaRecoderAddress;
     mediaRecord->pauseRecording([=]{
 
     });
@@ -62,7 +59,7 @@ void Java_com_example_codeclibrary_MovieRecorder_nativeFinishRecorder(JNIEnv * e
         return;
     }
 
-    MediaRecorder * mediaRecord = (MediaRecorder*) mMediaRecoderAddress;
+    auto * mediaRecord = (MediaRecorder*) mMediaRecoderAddress;
     mediaRecord->finishRecording([=]{
 
     });
@@ -73,10 +70,15 @@ void Java_com_example_codeclibrary_MovieRecorder_nativecancelRecording(JNIEnv * 
         return;
     }
 
-    MediaRecorder * mediaRecord = (MediaRecorder*) mMediaRecoderAddress;
+    auto * mediaRecord = (MediaRecorder*) mMediaRecoderAddress;
     mediaRecord->cancelRecording([=]{
 
     });
+}
+
+void Java_com_example_codeclibrary_MovieRecorder_nativeSurfaceDestory(JNIEnv * env, jobject obj, jlong mMediaRecoderAddress){
+    auto * mediaRecord = (MediaRecorder*) mMediaRecoderAddress;
+    delete mediaRecord;
 }
 
 

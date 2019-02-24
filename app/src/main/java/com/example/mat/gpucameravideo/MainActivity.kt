@@ -82,7 +82,7 @@ class MainActivity : AppCompatActivity(),
     }
 
     override fun onPreviewDestory() { //对应onSurfaceDestory
-
+        movieRecorder?.onSurfaceDestory()
     }
 
     /****************************************************************************************************/
@@ -116,7 +116,7 @@ class MainActivity : AppCompatActivity(),
             }
 
             R.id.switch_flash -> {
-                movieRecorder?.FinishRecorder()
+                movieRecorder?.finishRecorder()
                 return true
             }
 

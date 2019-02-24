@@ -3,13 +3,14 @@
 //
 
 #include "MessageQueue.h"
+#include <utility>
 
 GCVBase::MessageQueue::MessageQueue(std::string looperName, std::string messageQueueName) {
 
     // TODO 在这里加断言，这两个东西都必须有值的
 
-    mLooperName = looperName;
-    mMessageQueueName = messageQueueName;
+    mLooperName = std::move(looperName);
+    mMessageQueueName = std::move(messageQueueName);
 }
 
 void GCVBase::MessageQueue::addMessage(GCVBase::Message *message) {
@@ -18,9 +19,9 @@ void GCVBase::MessageQueue::addMessage(GCVBase::Message *message) {
 
     message->setMessageQueueName(mMessageQueueName); //给message设置所在队列的名称，方便回溯
 
-    if(queueHead != NULL){
+    if(queueHead != nullptr){
         Message * temp = queueHead;
-        while (temp->next != NULL){
+        while (temp->next != nullptr){
             temp = temp->next;
         }
         temp->next = message;
@@ -31,13 +32,13 @@ void GCVBase::MessageQueue::addMessage(GCVBase::Message *message) {
 
 GCVBase::Message *GCVBase::MessageQueue::getNextMessage() {
 
-    if (queueHead == NULL) { //等于NULL说明此时没有消息了
-        return NULL;
+    if (queueHead == nullptr) { //等于NULL说明此时没有消息了
+        return nullptr;
     }
 
     Message *m = queueHead;
     queueHead = m->next;
-    m->next = NULL;
+    m->next = nullptr;
 
     return m;
 }
@@ -49,17 +50,17 @@ void GCVBase::MessageQueue::recycleMessage(GCVBase::Message *message) {
 }
 
 void GCVBase::MessageQueue::recycleAllMessage() {
-    while(queueHead != NULL){
+    while(queueHead != nullptr){
         Message *m = queueHead;
         queueHead = m->next;
-        m->next = NULL;
+        m->next = nullptr;
         //TODO 加一个提示，就说哪个哪个Message被回收了
         Message::recycle(m);
     }
 }
 
 void GCVBase::MessageQueue::setMessageQueueName(std::string messageQueueName) {
-    mMessageQueueName = messageQueueName;
+    mMessageQueueName = std::move(messageQueueName);
 }
 
 std::string GCVBase::MessageQueue::getMessageQueueName() {
@@ -73,7 +74,7 @@ GCVBase::MessageQueue::~MessageQueue() {
 }
 
 bool GCVBase::MessageQueue::isMessageQueueEmpty() {
-    return queueHead == NULL;
+    return queueHead == nullptr;
 }
 
 

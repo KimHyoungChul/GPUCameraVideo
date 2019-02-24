@@ -13,6 +13,8 @@ static inline uint64_t getCurrentTime() {
 }
 
 GCVBase::MediaDecoder::MediaDecoder(const std::string &filePath,  ANativeWindow * nativeWindow) {
+    mNativeWindow = nativeWindow;
+
     if(filePath.empty()){
         __android_log_print(ANDROID_LOG_DEBUG, "MediaDecoder init", "MediaDecoder init without filePath");
     } else{
@@ -25,13 +27,13 @@ GCVBase::MediaDecoder::MediaDecoder(const std::string &filePath,  ANativeWindow 
     yuvFrameBuffer = new YUVFrameBuffer();
 
     if(loadFile()){
-        if(!initVideoCodec(nativeWindow)){
-            // TODO 打Log
+        if(!initVideoCodec(mNativeWindow)){
+            __android_log_print(ANDROID_LOG_ERROR, "initVideoCodec", "initVideoCodec failed");
             return ;
         }
 
         if(!initAudioCodec()){
-            // TODO 打Log
+            __android_log_print(ANDROID_LOG_ERROR, "initAudioCodec", "initAudioCodec failed");
             return ;
         }
     }
@@ -49,6 +51,12 @@ GCVBase::MediaDecoder::~MediaDecoder() {
         AMediaCodec_stop(mAudioDecodeCodec);
         AMediaCodec_delete(mAudioDecodeCodec);
     }
+
+    delete mNativeWindow;
+
+    delete frameAudioBuffer;
+    delete frameAudioBuffer;
+    delete yuvFrameBuffer;
 }
 
 
@@ -142,7 +150,7 @@ bool GCVBase::MediaDecoder::initVideoCodec(ANativeWindow * nativeWindow) {
     return false;
 }
 
-// TODO 这两段逻辑可以合并一下！！！
+
 
 bool GCVBase::MediaDecoder::initAudioCodec() {
     int audioTrackNum = AMediaExtractor_getTrackCount(audioEx);
@@ -207,18 +215,17 @@ GCVBase::MediaBuffer<uint8_t *> *GCVBase::MediaDecoder::getCodecFrameVideoBuffer
             auto samplesize = AMediaExtractor_readSampleData(videoEx, buf, buffsize);
             if (samplesize < 0) {
                 __android_log_print(ANDROID_LOG_ERROR, "AMediaCodec_dequeueInputBuffer", "InputBuffer stream is end");
-                samplesize = 0;
                 sawInput = true;
             }
 
             /**
              * AMediaExtractor_getSampleTime 以微妙为单位返回当前采样的 pts(显示时间戳)
              */
-            auto presentationTimeUs = AMediaExtractor_getSampleTime(videoEx) * 0.5;
+            auto presentationTimeUs = AMediaExtractor_getSampleTime(videoEx) ;
             /**
              * 必须在 samplesize < 0 也就是解码结束时，传入AMEDIACODEC_BUFFER_FLAG_END_OF_STREAM这个标志位，下面才好判断是否结束
              */
-            AMediaCodec_queueInputBuffer(mVideoDecodeCodec, bufferIndex, 0, samplesize, presentationTimeUs , sawInput ? AMEDIACODEC_BUFFER_FLAG_END_OF_STREAM : 0);
+            AMediaCodec_queueInputBuffer(mVideoDecodeCodec, bufferIndex, 0, buffsize, presentationTimeUs , sawInput ? AMEDIACODEC_BUFFER_FLAG_END_OF_STREAM : 0);
             AMediaExtractor_advance(videoEx);
         }
     }
@@ -226,7 +233,7 @@ GCVBase::MediaBuffer<uint8_t *> *GCVBase::MediaDecoder::getCodecFrameVideoBuffer
 
     if(!sawOutput) {
         AMediaCodecBufferInfo info;
-        auto index = AMediaCodec_dequeueOutputBuffer(mVideoDecodeCodec, &info, 0);
+        auto index = AMediaCodec_dequeueOutputBuffer(mVideoDecodeCodec, &info, 2000);
 
         if (index >= 0) {
 
@@ -235,7 +242,7 @@ GCVBase::MediaBuffer<uint8_t *> *GCVBase::MediaDecoder::getCodecFrameVideoBuffer
                 sawOutput = true;
             }
 
-            int64_t presentationNano = info.presentationTimeUs * 1000; // presentationTimeUs就是应当播放的时间戳，用来啊控制播放线程
+            int64_t presentationNano = info.presentationTimeUs * 1000; // presentationTimeUs就是应当播放的时间戳，用来控制播放线程
 
             if (renderStartTime < 0) { //renderStart初始化的时候，也就是第一帧解码出的时候，presentationNano = 0
                 renderStartTime = (int64_t)currentTimeOfNanoseconds() - presentationNano; //也就是说renderStart代表第一帧解码出来时的时间
@@ -305,11 +312,14 @@ GCVBase::MediaBuffer<uint8_t *> *GCVBase::MediaDecoder::getCodecFrameVideoBuffer
                 frameVideoBuffer->metaData = metaData;
 
                 size_t out_size;
-                uint8_t * outputBuf = NULL;
+                uint8_t * outputBuf = AMediaCodec_getOutputBuffer(mVideoDecodeCodec, index, &out_size);
 
-                outputBuf = AMediaCodec_getOutputBuffer(mVideoDecodeCodec, index, &out_size);
+                outputBuffer = (uint8_t *)(malloc(out_size));
 
-                frameVideoBuffer->mediaData = outputBuf;
+                memset(outputBuffer, 0, out_size);
+                memcpy(outputBuffer, outputBuf, out_size);  //复制outputBuffer数据
+
+                frameVideoBuffer->mediaData = outputBuffer;
                 frameVideoBuffer->time = *(MediaTime *) &info.presentationTimeUs;
 
                 AMediaCodec_releaseOutputBuffer(mVideoDecodeCodec, index, false);

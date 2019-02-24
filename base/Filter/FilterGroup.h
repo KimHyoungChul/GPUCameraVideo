@@ -23,9 +23,9 @@ namespace GCVBase {
         void addFilter(Filter * filter);
         void removeFilter(Filter * filter);
 
-        virtual void _setOutputRotation(const Rotation &rotation);
-        virtual void _setOutputFramebuffer(FrameBuffer *framebuffer);
-        virtual void _newFrameReadyAtTime(const MediaTime &time) ;
+        void _setOutputRotation(const Rotation &rotation) override;
+        void _setOutputFramebuffer(FrameBuffer *framebuffer) override;
+        void _newFrameReadyAtTime() override;
 
     private:
 
@@ -33,7 +33,7 @@ namespace GCVBase {
 
         std::vector<Filter * > mFilterGroup;
 
-        FrameBuffer *mOutputFilterGroupFramebuffer = NULL;
+        FrameBuffer *mOutputFilterGroupFramebuffer = nullptr;
     };
 }
 
