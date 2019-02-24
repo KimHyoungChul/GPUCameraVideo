@@ -2,6 +2,7 @@
 // Created by 刘轩 on 2018/12/24.
 //
 
+#include <android/log.h>
 #include "Context.h"
 
 GCVBase::Context * GCVBase::Context::mShareContext = nullptr;

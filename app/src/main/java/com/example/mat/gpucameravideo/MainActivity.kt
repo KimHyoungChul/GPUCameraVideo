@@ -19,6 +19,8 @@ import com.example.cameralibrary.preview.Preview.PreviewLifeListener
 import com.example.cameralibrary.preview.Preview.PreviewDataListener
 import com.example.codeclibrary.MovieRecorder
 import com.example.filterlibrary.FilterGroup
+import com.example.filterlibrary.effects.BlackFilter
+import com.example.filterlibrary.effects.ColorFilter
 import java.nio.ByteBuffer
 
 class MainActivity : AppCompatActivity(),

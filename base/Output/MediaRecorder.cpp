@@ -30,6 +30,10 @@ GCVBase::MediaRecorder::MediaRecorder(const GCVBase::EncoderConfig &config, JNIE
     mediaEncoder = new MediaEncoder(config);
     mediaBuffer =  new MediaBuffer<GLubyte *>();
 
+    auto size = (unsigned long) (mVideoSize.width * mVideoSize.height * 4);
+    auto alignSize = alignment_up((size), MemoryAligned);
+    mRGBADataSize = alignSize;
+
     EglCore * shareEglInstance = Context::getShareContext()->getEglInstance();
     EglCore * recordEglInstance = new EglCore(shareEglInstance->getEGLContext(), nullptr, 1, 1);
 
@@ -70,12 +74,9 @@ void GCVBase::MediaRecorder::startRecording(const std::function<void ()> &handle
     mStartCallback = handler;
 
     runSyncContextLooper(recordContext->getContextLooper(), [=]{
-        auto size = (unsigned long) (mVideoSize.width * mVideoSize.height * 4);
-        auto alignSize = alignment_up((size), MemoryAligned);
-        mRGBAData = new GLubyte[alignSize];
 
         mediaEncoder->startEncoder(mStartCallback);
-        mStartTime = MediaTime::Init();
+//        mStartTime = MediaTime::Init();
         mStartCallback = nullptr;
     });
 }
@@ -94,7 +95,10 @@ void GCVBase::MediaRecorder::finishRecording(const std::function<void ()> &handl
     mIsRecording = false;
     mFinishCallback = handler;
 
-    runSyncContextLooper(recordContext->getContextLooper(), [=]{
+    /**
+     * finish的时候需要用异步添加的方式，因为同步的话recordLooper中积压的消息会卡预览线程
+     */
+    runAsyncContextLooper(recordContext->getContextLooper(), [=]{
 
         if (!mEncoderIsFinished) {
             mEncoderIsFinished = true;
@@ -119,22 +123,47 @@ void GCVBase::MediaRecorder::_setOutputFramebuffer(GCVBase::FrameBuffer *framebu
     mFinalFilterFramebuffer = framebuffer;
 }
 
-void GCVBase::MediaRecorder::_newFrameReadyAtTime(const MediaTime &time) {
+void GCVBase::MediaRecorder::_newFrameReadyAtTime() {
     if(!mIsRecording){
         return;
     }
 
-    if (time.isValid() || time == mPreviousFrameTime) { //没有初始化（无效时间）；时间戳有问题
-        return;
-    }
-
-    if (mStartTime.isValid()) {
-        mStartTime = time;
-    }
+//    if (time.isValid() || time == mPreviousFrameTime) { //没有初始化（无效时间）；时间戳有问题
+//        return;
+//    }
+//
+//    if (mStartTime.isValid()) {
+//        mStartTime = time;
+//    }
 
     glFlush();
 
     runAsyncContextLooper(recordContext->getContextLooper(), [=]{
+
+        /**
+         * 由于异步线程执行的record耗时任务，导致的recordLooper中Message堆积，我们点击了停止按钮之后
+         * recordLooper仍然在处理未执行完的 Fuction 函数，也就是本段所在的Lamada表达式。
+         *
+         * 这本来无可厚非，我们应该等待这些 Fuction 函数执行完毕，但在本段中，我们执行的操作是：
+         * 将 mFinalFilterFramebuffer（由Camera传给FilterGroup，再传给MediaRecorder和DisplayView）帧缓冲
+         * 渲染到 Recoder 所有的帧缓冲，然后通过 glReadPixels 读取像素保存，这个读取像素的过程是比较耗时的
+         *
+         * 同时虽然Camera合成的每一帧都会调用到当前方法，也就是每一帧都会产生一个Fuction函数，用于读取
+         * mFinalFilterFramebuffer中的像素，但这个 Camera产生的唯一的FBO只能代表当前Camera实时合成的画面，
+         * 这意味着并不是每一个Fuction函数能够取得它应取得的像素，也意味着并不是每一帧Camera的像素都能够保证被写入文件，
+         *
+         * 如此，当我们在击了停止按钮之后，recordLooper仍在处理堆积的Fuction函数，但此时这些Fuction函数中，
+         * glReadPixels获取到的画面，是Camera当前实时合成的帧！！！也就是此时仍然在获取并写入点击停止之后的帧！！！
+         *
+         * 因此我们在这里加了这段 return 判断，用来在点击停止之后丢弃这些还在队列中积压的Fuction函数，确保点击停止
+         * 按钮之后确实停止录制。但这样，在整个录制的过程中我们就不可避免的产生了一些丢帧。
+         */
+
+        // TODO 解决上述丢帧问题得主要思路就是 fbo缓存，在写入的同时，把Camera实时产生的帧缓冲对象缓存起来，生成一个队列，
+        // TODO recordLooper作为消费者去这个队列中去捞缓存起来的 fbo对象，尽可能使Camera产生的每一帧都写入到文件中去
+        if(!mIsRecording){
+            return;
+        }
 
         renderRecorderFramebuffer(mFinalFilterFramebuffer);
 
@@ -147,17 +176,21 @@ void GCVBase::MediaRecorder::_newFrameReadyAtTime(const MediaTime &time) {
          * 注意：glReadPixels实际上是从缓冲区中读取数据，如果使用了双缓冲区，则默认是从正在显示的缓冲（即前缓冲）中读取，
          * 而绘制工作是默认绘制到后缓冲区的。因此，如果需要读取已经绘制好的像素，往往需要先交换前后缓冲
          */
+        auto * mRGBAData = (GLubyte *)(malloc(mRGBADataSize));
+        memset(mRGBAData, 0, mRGBADataSize);
+
+        // TODO 同时glReadPixels这个函数其实是效率相对比较低下的，可以考虑用openl es 3.0中的 GL_PIXEL_PACK_BUFFER 代替
         glReadPixels(0,0, (int)mVideoSize.width, (int)mVideoSize.height, GL_RGBA, GL_UNSIGNED_BYTE, mRGBAData);
 
         mediaBuffer->mediaType = MediaType::Video;
         mediaBuffer->mediaData = mRGBAData;
         mediaBuffer->metaData[WidthKey] = (const void *)(long)mVideoSize.width;
         mediaBuffer->metaData[HeightKey] = (const void *)(long)mVideoSize.height;
-        mediaBuffer->time = time - mStartTime;
+//        mediaBuffer->time = time - mStartTime;
 
         mediaEncoder->newFrameReadyAtTime(mediaBuffer);
 
-        mPreviousFrameTime = time;
+//        mPreviousFrameTime = time;
     });
 }
 /**

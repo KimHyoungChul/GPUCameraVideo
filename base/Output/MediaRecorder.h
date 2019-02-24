@@ -22,11 +22,11 @@ namespace GCVBase {
         GLuint uTextureuniform = 0;
 
         Size mVideoSize = Size::zero();
-        MediaTime mStartTime = MediaTime::Init();
-        MediaTime mPreviousFrameTime = MediaTime::NegativeInfinity();
-        MediaTime mPreviousAudioTime = MediaTime::NegativeInfinity();
+//        MediaTime mStartTime = MediaTime::Zero();
+//        MediaTime mPreviousFrameTime = MediaTime::NegativeInfinity();
+//        MediaTime mPreviousAudioTime = MediaTime::NegativeInfinity();
 
-        GLubyte * mRGBAData = nullptr;
+        size_t mRGBADataSize = 0;
         GLuint mRecorderTexture = 0;
         GLuint mRecorderFramebuffer = 0;
 
@@ -69,7 +69,7 @@ namespace GCVBase {
         void finishRecording(const std::function<void ()> &handler);
         void cancelRecording(const std::function<void ()> &handler);
 
-        void _newFrameReadyAtTime(const MediaTime &time) override;
+        void _newFrameReadyAtTime() override;
         void _setOutputRotation(const Rotation &rotation) override;
         void _setOutputFramebuffer(FrameBuffer *framebuffer) override;
     };

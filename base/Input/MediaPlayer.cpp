@@ -82,7 +82,7 @@ void GCVBase::MediaPlayer::newFrameReadyAtTime(const Rotation &mRotation, FrameB
         auto currentTarget =  * i;
         currentTarget->_setOutputRotation(mRotation);
         currentTarget->_setOutputFramebuffer(resultFbo);
-        currentTarget->_newFrameReadyAtTime(time);
+//        currentTarget->_newFrameReadyAtTime(time);
     }
 }
 

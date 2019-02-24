@@ -16,7 +16,7 @@ namespace GCVBase {
     public:
         virtual void _setOutputFramebuffer(FrameBuffer *framebuffer) = 0;
         virtual void _setOutputRotation(const Rotation &rotation) = 0;
-        virtual void _newFrameReadyAtTime(const MediaTime &time) = 0;
+        virtual void _newFrameReadyAtTime() = 0;
 
     };
 

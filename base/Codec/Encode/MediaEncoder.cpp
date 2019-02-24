@@ -2,7 +2,6 @@
 // Created by 刘轩 on 2019/1/11.
 //
 
-#include <android/log.h>
 #include <Context.h>
 #include "libyuv.h"
 #include "MediaEncoder.hpp"
@@ -204,6 +203,8 @@ void GCVBase::MediaEncoder::newFrameEncodeVideo(GCVBase::MediaBuffer<uint8_t *> 
             free(I420);
         }
 
+        free(videoBuffer->mediaData);
+
         uint64_t time = (uint64_t) getCurrentTime();
         AMediaCodec_queueInputBuffer(mVideoMediaCodec, (size_t) inputBuffer, 0, (size_t) outputSize, time, 0);
 
@@ -286,7 +287,6 @@ void GCVBase::MediaEncoder::recordCodecBuffer(AMediaCodecBufferInfo *bufferInfo,
 
         GCVBase::runSyncContextLooper(encoderLooper, [=]{
             if (bufferInfo->size > 0) {
-//                bufferInfo->presentationTimeUs = (uint64_t)getCurrentTime();
                 media_status_t status = AMediaMuxer_writeSampleData(mMuxer, trackIndex, output, bufferInfo); //这里直接就把 outputbuffer传进去了，毕竟是同步写入文件，写完后才会释放buffer
                 if (status != AMEDIA_OK) {
                     __android_log_print(ANDROID_LOG_ERROR, "writeSampleData", "write sample data failed !!!type:%s", trackIndex == 0 ? "audio" : "video");

@@ -37,7 +37,7 @@ namespace GCVBase {
         static std::string VertexShared();
         static std::string FragmentShared();
 
-        void newFrameReadyAtTime(const MediaTime &time);
+        void newFrameReadyAtTime();
 
     public:
 

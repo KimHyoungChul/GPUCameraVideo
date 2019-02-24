@@ -3,10 +3,11 @@
 //
 
 #include "Message.h"
+#include <utility>
 
 int GCVBase::Message::maxSize = 20;
 int GCVBase::Message::nowSize = 0;
-GCVBase::Message * GCVBase::Message::poolHead = NULL;
+GCVBase::Message * GCVBase::Message::poolHead = nullptr;
 
 
 /**
@@ -15,9 +16,9 @@ GCVBase::Message * GCVBase::Message::poolHead = NULL;
 GCVBase::Message *GCVBase::Message::obtain() {
     Message *m = poolHead;
 
-    if (poolHead != NULL) {
+    if (poolHead != nullptr) {
         poolHead = m->next;
-        m->next = NULL;
+        m->next = nullptr;
         nowSize--;
         return m;
     } else {
@@ -30,10 +31,10 @@ void GCVBase::Message::recycle(GCVBase::Message *message) {
 
     resetMessage(message); //回收时先重置Message对象中的各种信息
 
-    if(poolHead != NULL){
+    if(poolHead != nullptr){
         if(!isNowMaxPool()) {
             Message *temp = poolHead;
-            while (temp->next != NULL) {
+            while (temp->next != nullptr) {
                 temp = temp->next;
             }
             temp->next = message;
@@ -49,25 +50,25 @@ void GCVBase::Message::recycle(GCVBase::Message *message) {
 }
 
 void GCVBase::Message::resetMessage(Message * message) {
-    message->next = NULL;
+    message->next = nullptr;
     message->setMessageQueueName(""); //reset的时候主要把next和QueueName置空，Function对象不要动，可以重复利用
 }
 
 void GCVBase::Message::clearMessagePool() {
-    while(poolHead != NULL){ //清空缓存池中的缓存消息
+    while(poolHead != nullptr){ //清空缓存池中的缓存消息
         Message *m = poolHead;
         poolHead = m->next;
-        m->next = NULL;
+        m->next = nullptr;
         delete(m);
     }
 }
 
 GCVBase::Message::Message() {
-    Message("", NULL);
+    Message("", nullptr);
 }
 
 GCVBase::Message::Message(std::string messageQueueName, Function *messageFunction) {
-    mMessageQueueName = messageQueueName;
+    mMessageQueueName = std::move(messageQueueName);
     mMessageFunction = messageFunction;
 }
 
@@ -78,7 +79,7 @@ GCVBase::Message::~Message() {
 
 
 void GCVBase::Message::setMessageQueueName(std::string messageQueueName) {
-    mMessageQueueName = messageQueueName;
+    mMessageQueueName = std::move(messageQueueName);
 }
 
 std::string GCVBase::Message::getMessageQueueName() {

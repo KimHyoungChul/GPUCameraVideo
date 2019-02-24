@@ -25,7 +25,7 @@ namespace GCVBase {
 
         void _setOutputRotation(const Rotation &rotation) override;
         void _setOutputFramebuffer(FrameBuffer *framebuffer) override;
-        void _newFrameReadyAtTime(const MediaTime &time) override;
+        void _newFrameReadyAtTime() override;
 
     private:
 

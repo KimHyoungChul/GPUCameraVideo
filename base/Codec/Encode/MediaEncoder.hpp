@@ -7,6 +7,7 @@
 
 #include <media/NdkMediaCodec.h>
 #include <media/NdkMediaMuxer.h>
+#include <android/log.h>
 #include "Encoder.hpp"
 #include "Looper.h"
 #include "EncoderConfig.hpp"

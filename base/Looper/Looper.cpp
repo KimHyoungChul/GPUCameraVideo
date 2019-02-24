@@ -2,6 +2,7 @@
 // Created by 刘轩 on 2018/12/20.
 //
 
+#include <android/log.h>
 #include "Looper.h"
 
 void GCVBase::Looper::runFunctionInLock(const std::function<void()> &function) {
@@ -56,8 +57,8 @@ void GCVBase::Looper::addMessage(const std::function<void()> &function, bool asy
         return;
     }
 
-    Function * fun = NULL;
-    Message * message = NULL;
+    Function * fun = nullptr;
+    Message * message = nullptr;
     runFunctionInLock([&]{
         message = Message::obtain();
         if(!message->mMessageFunction) {
@@ -88,7 +89,7 @@ void GCVBase::Looper::addMessage(const std::function<void()> &function, bool asy
 }
 
 /**
- * loop()这个方法时在Looper对应的线程中运行，相当于消费者。
+ * loop()这个方法是在Looper对应的线程中运行，相当于消费者。
  *
  *    我们规定一个Looper对象对应一个线程，且在Looper的构造函数中创建了条件锁对象，也就是说一个Looper对象拥有一个
  * queueConditionLock对象，该condition锁只能用来阻塞当前的Looper线程和addMessage线程
@@ -99,11 +100,11 @@ void GCVBase::Looper::loop() {
 
     while(!mQuit) {
 
-        Message * message = NULL;
-        Function * function = NULL;
+        Message * message = nullptr;
+        Function * function = nullptr;
         runFunctionInLock([&]{
             message = mMessageQueue->getNextMessage();
-            if(message != NULL){
+            if(message != nullptr){
                 function = message->mMessageFunction;
             }
         });
