@@ -22,9 +22,6 @@ namespace GCVBase {
         GLuint uTextureuniform = 0;
 
         Size mVideoSize = Size::zero();
-//        MediaTime mStartTime = MediaTime::Zero();
-//        MediaTime mPreviousFrameTime = MediaTime::NegativeInfinity();
-//        MediaTime mPreviousAudioTime = MediaTime::NegativeInfinity();
 
         size_t mRGBADataSize = 0;
         GLuint mRecorderTexture = 0;
