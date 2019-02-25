@@ -76,7 +76,6 @@ void GCVBase::MediaRecorder::startRecording(const std::function<void ()> &handle
     runSyncContextLooper(recordContext->getContextLooper(), [=]{
 
         mediaEncoder->startEncoder(mStartCallback);
-//        mStartTime = MediaTime::Init();
         mStartCallback = nullptr;
     });
 }
@@ -128,13 +127,6 @@ void GCVBase::MediaRecorder::_newFrameReadyAtTime() {
         return;
     }
 
-//    if (time.isValid() || time == mPreviousFrameTime) { //没有初始化（无效时间）；时间戳有问题
-//        return;
-//    }
-//
-//    if (mStartTime.isValid()) {
-//        mStartTime = time;
-//    }
 
     glFlush();
 
@@ -186,11 +178,9 @@ void GCVBase::MediaRecorder::_newFrameReadyAtTime() {
         mediaBuffer->mediaData = mRGBAData;
         mediaBuffer->metaData[WidthKey] = (const void *)(long)mVideoSize.width;
         mediaBuffer->metaData[HeightKey] = (const void *)(long)mVideoSize.height;
-//        mediaBuffer->time = time - mStartTime;
 
         mediaEncoder->newFrameReadyAtTime(mediaBuffer);
 
-//        mPreviousFrameTime = time;
     });
 }
 /**
